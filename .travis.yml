@@ -47,16 +47,16 @@ matrix:
       # a native build, i386 is a multilib build and armel is a cross-toolchain + qemu build. All
       # other builds that we skip on non-master fall into one of thse.
     - stage: "Build"
-      script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh x86_64
+      script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
     - stage: "Build"
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh i386
     - stage: "Build"
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armel
     - stage: "Build"
-      if: branch = master
+      #if: branch = master
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armhf
     - stage: "Build"
-      if: branch = master
+      #if: branch = master
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
     #- stage: "Build"
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_macos.sh
