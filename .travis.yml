@@ -8,37 +8,40 @@ matrix:
   fast_finish: true
   include:
     #- stage: "Check"
+     #env: JOB="clang-format"
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/check_clang-format.sh
     #- stage: "Check"
+     #env: JOB="clang scan-build"
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/check_clang-scan-build.sh
     #- stage: "Check"
+     #env: JOB="cppcheck"
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/check_cppcheck.sh
       ## Building Qt can take close to 50 minutes, which is the time limit on Travis, so we build Qt
       ## in its own job, cache the build, and use the cache when building our app.
-      ## Jobs with the same env (distro, os, etc.) share the cache, so by setting RESTRICT_CACHE to
-      ## different values for i686 ans x86_64 builds, we make sure that they don't spend time
+      ## Note that only jobs with the same env (distro, os, etc.) share the cache, so by setting JOB
+      ## to different values for i686 ans x86_64 builds, we make sure that they don't spend time
       ## downloading the cache they won't use.
     #- stage: "Windows Deps: Qt"
-      #env: RESTRICT_CACHE=/opt/cache/windows/i686
-      #script: sudo docker run --rm -v $PWD:/repo -v $RESTRICT_CACHE:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage1 i686
+      #env: JOB="Windows i686"
+      #script: sudo docker run --rm -v $PWD:/repo -v /opt/cache/windows/i686:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage1 i686
       #cache:
         #directories:
           #- /opt/cache/windows/i686
     #- stage: "Windows Deps: Qt"
-      #env: RESTRICT_CACHE=/opt/cache/windows/x86_64
-      #script: sudo docker run --rm -v $PWD:/repo -v $RESTRICT_CACHE:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage1 x86_64
+      #env: JOB="Windows x86_64"
+      #script: sudo docker run --rm -v $PWD:/repo -v /opt/cache/windows/x86_64:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage1 x86_64
       #cache:
         #directories:
           #- /opt/cache/windows/x86_64
     #- stage: "Build"
-      #env: RESTRICT_CACHE=/opt/cache/windows/i686
-      #script: sudo docker run --rm -v $PWD:/repo -v $RESTRICT_CACHE:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage2 i686
+      #env: JOB="Windows i686"
+      #script: sudo docker run --rm -v $PWD:/repo -v /opt/cache/windows/i686:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage2 i686
       #cache:
         #directories:
           #- /opt/cache/windows/i686
     #- stage: "Build"
-      #env: RESTRICT_CACHE=/opt/cache/windows/x86_64
-      #script: sudo docker run --rm -v $PWD:/repo -v $RESTRICT_CACHE:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage2 x86_64
+      #env: JOB="Windows x86_64"
+      #script: sudo docker run --rm -v $PWD:/repo -v /opt/cache/windows/x86_64:/cache debian:stretch-slim /bin/bash /repo/.travis/build_windows.sh stage2 x86_64
       #cache:
         #directories:
           #- /opt/cache/windows/x86_64
@@ -47,23 +50,24 @@ matrix:
       # a native build, i386 is a multilib build and armel is a cross-toolchain + qemu build. All
       # other builds that we skip on non-master fall into one of thse.
     - stage: "Build"
-      env: JOB="AppImage amd64"
+      env: JOB="Linux AppImage amd64"
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
     - stage: "Build"
-      env: JOB="AppImage i386"
+      env: JOB="Linux AppImage i386"
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh i386
     - stage: "Build"
-      env: JOB="AppImage armel"
+      env: JOB="Linux AppImage armel"
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armel
     - stage: "Build"
       #if: branch = master
-      env: JOB="AppImage armhf"
+      env: JOB="Linux AppImage armhf"
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armhf
     - stage: "Build"
       #if: branch = master
-      env: JOB="AppImage arm64"
+      env: JOB="Linux AppImage arm64"
       script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
     #- stage: "Build"
+      #env: JOB="macOS"
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_macos.sh
 
 #after_success:
