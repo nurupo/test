@@ -277,6 +277,8 @@ build()
     file output/usr/bin/*
     file *.AppImage
 
+    /usr/bin/${TRIPLE}-readelf -Wh *.AppImage
+
     ls -lbh *.AppImage
 }
 
