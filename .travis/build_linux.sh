@@ -211,7 +211,6 @@ build()
         liblz4-dev
         libcairo-dev
         libarchive-dev
-        libgtest-dev
     )
 
     apt_install_native "${APP_IMAGE_KIT_DEPS_NATIVE[@]}"
@@ -220,16 +219,9 @@ build()
     # liblzma-dev installs both .a and .so. Having .so breaks AppImageKit building, as it will pick .so thinking it's .a.
     rm /usr/lib/${TRIPLE}/liblzma.so
 
-    cd /usr/src/gtest
-    cmake -DCMAKE_BUILD_TYPE=RELEASE \
-          -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/${TRIPLE}.cmake \
-          .
-    make install
-    cd -
-
     git clone --recursive https://github.com/AppImage/AppImageKit AppImageKit
     cd AppImageKit
-    git checkout 092f90adbcf4a981d829a6e17be3586240c17a63
+    git checkout a01f60bb728af07a73644e677d73467985e8dca7
     sed -i "s|<SOURCE_DIR>/configure |<SOURCE_DIR>/configure --host=${TRIPLE} |" cmake/dependencies.cmake
     sed -i "s|gcc|/usr/bin/${TRIPLE}-gcc|" src/build-runtime.sh.in
     sed -i "s|ld |/usr/bin/${TRIPLE}-ld |" src/build-runtime.sh.in
@@ -237,7 +229,6 @@ build()
     sed -i "s|readelf |/usr/bin/${TRIPLE}-readelf |" src/build-runtime.sh.in
     sed -i "s|strip|/usr/bin/${TRIPLE}-strip|" src/build-runtime.sh.in
     sed -i "s|objdump |/usr/bin/${TRIPLE}-objdump |" src/build-runtime.sh.in
-    echo "" > tests/CMakeLists.txt
     mkdir build
     cd build
     export PKG_CONFIG_LIBDIR=/usr/lib/${TRIPLE}/pkgconfig:/usr/share/pkgconfig
@@ -246,7 +237,7 @@ build()
           -DUSE_SYSTEM_XZ=ON \
           -DUSE_SYSTEM_INOTIFY_TOOLS=ON \
           -DUSE_SYSTEM_LIBARCHIVE=ON \
-          -DUSE_SYSTEM_GTEST=ON \
+          -DBUILD_TESTING=OFF \
           ..
     # Always use 1 job. The build breaks with >1 jobs and it's a known issue, apparently.
     make VERBOSE=1 -j1
