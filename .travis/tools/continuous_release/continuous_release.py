@@ -113,33 +113,33 @@ def download_artifact(github_token, src_url, dst_dir):
 
 
 def upload_artifacts(src_dir, release):
-    print('Uploading artifacts to "{}" release\n'.format(release.tag_name))
+    print('Uploading artifacts to "{}" release'.format(release.tag_name))
     artifacts = sorted(os.listdir(src_dir))
-    print('Found {} artifacts in "{}" directory\n'.format(len(artifacts), src_dir))
+    print('Found {} artifacts in "{}" directory'.format(len(artifacts), src_dir))
     for artifact in artifacts:
         artifact_path = os.path.join(src_dir, artifact)
         if os.path.isfile(artifact_path):
             print('\tStoring "{}" ({:.1f} MiB) artifact in the release...'.format(
-                artifact, os.path.getsize(artifact_path)/1024/1024))
+                artifact, os.path.getsize(artifact_path)/1024/1024), end='', flush=True)
             start_time = time.time()
             release.upload_asset(artifact_path)
             elapsed_time = time.time() - start_time
-            print(' Done in {:.2f} seconds\n'.format(elapsed_time))
-    print('All artifacts for "{}" release are uploaded\n'.format(release.tag_name))
+            print(' Done in {:.2f} seconds'.format(elapsed_time))
+    print('All artifacts for "{}" release are uploaded'.format(release.tag_name))
 
 
 def download_artifcats(github_token, release, dst_dir):
-    print('Downloading artifacts from "{}" release\n'.format(release.tag_name))
+    print('Downloading artifacts from "{}" release'.format(release.tag_name))
     assets = [asset for asset in release.get_assets()]
-    print('Found {} artifacts in the release\n'.format(len(assets)))
+    print('Found {} artifacts in the release'.format(len(assets)))
     for asset in assets:
         print('\tDownloading artifact "{}" ({:.1f} MiB)...'.format(
-            asset.name, asset.size/1024/1024))
+            asset.name, asset.size/1024/1024), end='', flush=True)
         start_time = time.time()
         download_artifact(github_token, asset.url, dst_dir)
         elapsed_time = time.time() - start_time
-        print(' Done in {:.2f} seconds\n'.format(elapsed_time))
-    print('All artifacts from "{}" release are downloaded\n'.format(release.tag_name))
+        print(' Done in {:.2f} seconds'.format(elapsed_time))
+    print('All artifacts from "{}" release are downloaded'.format(release.tag_name))
 
 
 def store_artifacts(artifact_dir, release_name, release_body, github_token, github_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_job_number, travis_job_id):
@@ -152,7 +152,7 @@ def store_artifacts(artifact_dir, release_name, release_body, github_token, gith
         raise ContinuousReleaseError(
             'Release with tag name "{}" already exists. Was this job restarted? We don\'t support restarts.'.format(tag_name))
     # Create a draft release containing all the artifacts
-    print('Creating a draft release with tag name "{}"\n'.format(tag_name))
+    print('Creating a draft release with tag name "{}"'.format(tag_name))
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name,
         name=release_name if release_name else tag_name,
@@ -164,7 +164,7 @@ def store_artifacts(artifact_dir, release_name, release_body, github_token, gith
         draft=True,
         prerelease=True,
         target_commitish=travis_commit)
-    print('Release created\n')
+    print('Release created')
     upload_artifacts(args.artifact_dir, release)
 
 
@@ -181,7 +181,7 @@ def collect_stored_artifacts(artifact_dir, github_token, github_api_url, travis_
         travis_repo_slug).get_releases()
     releases_stored = stored_releases(
         releases, travis_branch, travis_build_number)
-    print('DEBUG: releases_stored = {}\n'.format(releases_stored))
+    print('DEBUG: releases_stored = {}'.format(releases_stored))
     if not releases_stored:
         print(
             'Couldn\'t find any draft releases with stored build artifacts for this build')
@@ -192,11 +192,11 @@ def collect_stored_artifacts(artifact_dir, github_token, github_api_url, travis_
 
 def publish_numbered_release(numbered_release_count, releases, artifact_dir, numbered_release_name, numbered_release_body, github_token, github_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
     tag_name = 'continuous-{}-{}'.format(travis_branch, travis_build_number)
-    print('Starting the procedure of creating a numbered release with tag name "{}"\n'.format(tag_name))
+    print('Starting the procedure of creating a numbered release with tag name "{}"'.format(tag_name))
     if any(release.tag_name == tag_name for release in releases):
         raise ContinuousReleaseError(
             'Release with tag name "{}" already exists. Was this job restarted? We don\'t support restarts'.format(tag_name))
-    print('Keeping only {} numbered releases for "{}" branch.\n'.format(
+    print('Keeping only {} numbered releases for "{}" branch.'.format(
         numbered_release_count, travis_branch))
     prefix = 'continuous-{}-'.format(travis_branch)
     previous_numbered_releases = [r for r in releases if not r.draft and r.tag_name.startswith(prefix) and re.match(
@@ -206,14 +206,15 @@ def publish_numbered_release(numbered_release_count, releases, artifact_dir, num
         len(previous_numbered_releases) + 1) - numbered_release_count
     if extra_numbered_releases_to_remove < 0:
         extra_numbered_releases_to_remove = 0
-    print('Found {} numbered releases for "{}" branch. Accounting for the one we are about to make, {} of existing numbered releases must be deleted.\n'.format(
+    print('Found {} numbered releases for "{}" branch. Accounting for the one we are about to make, {} of existing numbered releases must be deleted.'.format(
         len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
     if extra_numbered_releases_to_remove > 0:
         for release in previous_numbered_releases[-extra_numbered_releases_to_remove:]:
-            print('Deleting release with tag name {}...'.format(release.tag_name))
+            print('Deleting release with tag name {}...'.format(release.tag_name), end='', flush=True)
             release.delete_release()
-            print(' Done\n')
-    print('Creating a numbered draft release with tag name "{}"\n'.format(tag_name))
+            github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()
+            print(' Done')
+    print('Creating a numbered draft release with tag name "{}"'.format(tag_name))
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name,
         name=numbered_release_name if numbered_release_name else
@@ -226,23 +227,24 @@ def publish_numbered_release(numbered_release_count, releases, artifact_dir, num
         prerelease=True,
         target_commitish=travis_commit)
     upload_artifacts(artifact_dir, release)
-    print('Removing the draft flag from the "{}" release\n'.format(tag_name))
+    print('Removing the draft flag from the "{}" release'.format(tag_name))
     release.update_release(
         name=release.title, message=release.body, draft=False, prerelease=True)
 
 
 def publish_latest_release(releases, artifact_dir, latest_release_name, latest_release_body, github_token, github_api_url, travis_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
     tag_name = 'continuous-{}'.format(travis_branch)
-    print('Starting the procedure of creating/updating a latest release with tag name "{}"\n'.format(tag_name))
+    print('Starting the procedure of creating/updating a latest release with tag name "{}"'.format(tag_name))
     if int(Travis.github_auth(github_token, travis_api_url).branch_last_build_number(travis_repo_slug, travis_branch)) != int(travis_build_number):
-        print('Not creating/updating the "{}" release because there exists a newer build for "{}" branch on Travis-CI.\n'.format(tag_name, travis_branch))
-        print('We would either overwrite the artifacts uploaded by the newer build or mess up the release due to a race condition of both us updating the release at the same time.\n')
+        print('Not creating/updating the "{}" release because there exists a newer build for "{}" branch on Travis-CI'.format(tag_name, travis_branch))
+        print('We would either overwrite the artifacts uploaded by the newer build or mess up the release due to a race condition of both us updating the release at the same time')
         return
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
-        print('Deleting the previous "{}" release\n'.format(tag_name))
+        print('Deleting the previous "{}" release'.format(tag_name))
         previous_release[0].delete_release()
-    print('Creating a draft release with tag name "{}"\n'.format(tag_name))
+        github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(previous_release[0].tag_name)).delete()
+    print('Creating a draft release with tag name "{}"'.format(tag_name))
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name,
         name=latest_release_name if latest_release_name else
@@ -254,7 +256,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
         prerelease=True,
         target_commitish=travis_commit)
     upload_artifacts(artifact_dir, release)
-    print('Removing the draft flag from the "{}" release\n'.format(tag_name))
+    print('Removing the draft flag from the "{}" release'.format(tag_name))
     release.update_release(
         name=release.title, message=release.body, draft=False, prerelease=True)
 
@@ -262,7 +264,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
 def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
     releases = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(
         travis_repo_slug).get_releases()
-    print('Deleting unnecessary draft releases\n')
+    print('Deleting unnecessary draft releases')
     prefix = 'continuous-{}-'.format(travis_branch)
     branch_unfinished_build_numbers = Travis.github_auth(
         github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
@@ -272,15 +274,15 @@ def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_
     releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
     for release in releases_stored_previous:
         print('Deleting draft release with tag name "{}"...'.format(
-            release.tag_name))
+            release.tag_name), end='', flush=True)
         release.delete_release()
-        print(' Done\n')
+        print(' Done')
     for release in stored_releases(releases, travis_branch, travis_build_number):
         print('Deleting draft release with tag name "{}"...'.format(
-            release.tag_name))
+            release.tag_name), end='', flush=True)
         release.delete_release()
-        print(' Done\n')
-    print('All unnecessary draft releases are deleted\n')
+        print(' Done')
+    print('All unnecessary draft releases are deleted')
 
 
 def publish_releases(artifact_dir, latest_release, latest_release_name, latest_release_body, numbered_release, numbered_release_count, numbered_release_name, numbered_release_body, github_token, github_api_url, travis_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
