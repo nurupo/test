@@ -252,7 +252,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
         name=release.name(), message=release.message(), draft=False, prerelease=True)
 
 
-def cleanup_draft_releases(github_token, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
+def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
     releases = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(
         travis_repo_slug).get_releases()
     print('Deleting unnecessary draft releases\n')
@@ -395,8 +395,9 @@ if __name__ == "__main__":
                                      require_env('TRAVIS_REPO_SLUG'), require_env('TRAVIS_BRANCH'),
                                      require_env('TRAVIS_BUILD_NUMBER'))
         elif args.command == 'cleanup':
-            cleanup_draft_releases(require_env('GITHUB_ACCESS_TOKEN'), travis_api_url, require_env('TRAVIS_REPO_SLUG'),
-                                   require_env('TRAVIS_BRANCH'), require_env('TRAVIS_BUILD_NUMBER'))
+            cleanup_draft_releases(require_env('GITHUB_ACCESS_TOKEN'), args.github_api_url, travis_api_url,
+                                   require_env('TRAVIS_REPO_SLUG'), require_env('TRAVIS_BRANCH'),
+                                   require_env('TRAVIS_BUILD_NUMBER'))
         elif args.command == 'publish':
             if not os.path.isdir(args.artifact_dir):
                 raise ContinuousReleaseError('Directory "{}" doesn\'t exist'.format(args.artifact_dir))
