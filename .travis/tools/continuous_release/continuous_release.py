@@ -15,7 +15,7 @@ import time
 
 class Travis:
     _headers = {
-        'Travis-API-Version': 3,
+        'Travis-API-Version': '3',
         'User-Agent': 'continuous-release-publisher',
     }
 
