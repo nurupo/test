@@ -90,8 +90,13 @@ class ContinuousReleaseError(Exception):
     pass
 
 
-def download_file(src_url, dst_dir):
-    r = requests.get(src_url, allow_redirects=True, stream=True)
+def download_artifact(github_token, src_url, dst_dir):
+    # doc: https://developer.github.com/v3/repos/releases/#get-a-single-release-asset
+    headers = {
+        'Authorization': 'token {}'.format(github_token),
+        'Accept': 'application/octet-stream',
+    }
+    r = requests.get(src_url, headers=headers, allow_redirects=True, stream=True)
     # Figure out filename
     cd = r.headers.get('Content-Disposition')
     filename = None
@@ -103,7 +108,7 @@ def download_file(src_url, dst_dir):
         filename = src_url.split('/')[-1]
     filepath = os.path.join(dst_dir, filename)
     with open(filepath, 'wb') as f:
-        shutil.copyfileobj(r.content, f)
+        shutil.copyfileobj(r.raw, f)
     return filepath
 
 
@@ -123,7 +128,7 @@ def upload_artifacts(src_dir, release):
     print('All artifacts for "{}" release are uploaded\n'.format(release.tag_name))
 
 
-def download_artifcats(release, dst_dir):
+def download_artifcats(github_token, release, dst_dir):
     print('Downloading artifacts from "{}" release\n'.format(release.tag_name))
     assets = [asset for asset in release.get_assets()]
     print('Found {} artifacts in the release\n'.format(len(assets)))
@@ -131,7 +136,7 @@ def download_artifcats(release, dst_dir):
         print('\tDownloading artifact "{}" ({:.1f} MiB)...'.format(
             asset.name, asset.size/1024/1024))
         start_time = time.time()
-        download_file(asset.browser_download_url, dst_dir)
+        download_artifact(github_token, asset.url, dst_dir)
         elapsed_time = time.time() - start_time
         print(' Done in {:.2f} seconds\n'.format(elapsed_time))
     print('All artifacts from "{}" release are downloaded\n'.format(release.tag_name))
@@ -182,7 +187,7 @@ def collect_stored_artifacts(artifact_dir, github_token, github_api_url, travis_
             'Couldn\'t find any draft releases with stored build artifacts for this build')
         return
     for release in releases_stored:
-        download_artifcats(release, artifact_dir)
+        download_artifcats(github_token, release, artifact_dir)
 
 
 def publish_numbered_release(numbered_release_count, releases, artifact_dir, numbered_release_name, numbered_release_body, github_token, github_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
