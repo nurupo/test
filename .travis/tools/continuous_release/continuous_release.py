@@ -103,7 +103,7 @@ def download_file(src_url, dst_dir):
         filename = src_url.split('/')[-1]
     filepath = os.path.join(dst_dir, filename)
     with open(filepath, 'wb') as f:
-        shutil.copyfileobj(r.raw, f)
+        shutil.copyfileobj(r.content, f)
     return filepath
 
 
