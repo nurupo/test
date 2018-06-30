@@ -81,7 +81,7 @@ build_with_cross_toolchain()
 
     apt_install_native "binutils-${TRIPLE} gcc-${TRIPLE} g++-${TRIPLE} qemu-user-static"
 
-    cp /repo/.travis/tools/xldd.sh /usr/bin/${TRIPLE}-ldd
+    cp /repo/.travis/tools/xldd/xldd.sh /usr/bin/${TRIPLE}-ldd
     chmod +x /usr/bin/${TRIPLE}-ldd
     export CT_XLDD_ROOT="/"
 
@@ -271,6 +271,10 @@ build()
     /usr/bin/${TRIPLE}-readelf -Wh *.AppImage
 
     ls -lbh *.AppImage
+    mv *.AppImage MyApp_${ARCH}.AppImage
+
+    mkdir /tmp/deploy
+    mv *.AppImage /tmp/deploy
 }
 
 ARCH=$1

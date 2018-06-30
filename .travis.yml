@@ -1,5 +1,8 @@
 sudo: required
 dist: trusty
+language: python
+python:
+  - 3.6
 
 services:
   - docker
@@ -69,12 +72,23 @@ matrix:
     #- stage: "Build"
       #env: JOB="macOS"
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_macos.sh
+    - stage: "Deploy"
+      if: repo == head_repo
+      script: bash .travis/deploy_release.sh
 
 #after_success:
-    ## If PR, upload build results of a PR to a temporary file hosting
+    # If PR, upload build results of a PR to a temporary file hosting
   #- test $TRAVIS_PULL_REQUEST != "false" && python3 .travis/deploy_pr.sh
-    ## If master branch, create a continious release
+    # If master branch, create a continious release
   #- test $TRAVIS_BRANCH = "master" && test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_master.sh
+  #- test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh
+
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: bash .travis/deploy_store.sh
+  on:
+    all_branches: true
 
 branches:
   except:
