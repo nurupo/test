@@ -129,9 +129,9 @@ def download_artifcats(release, dst_dir):
     print('Found {} artifacts in the release\n'.format(len(assets)))
     for asset in assets:
         print('\tDownloading artifact "{}" ({:.1f} MiB)...'.format(
-            asset.name(), asset.size()/1024/1024))
+            asset.name, asset.size/1024/1024))
         start_time = time.time()
-        download_file(asset.browser_download_url(), dst_dir)
+        download_file(asset.browser_download_url, dst_dir)
         elapsed_time = time.time() - start_time
         print(' Done in {:.2f} seconds\n'.format(elapsed_time))
     print('All artifacts from "{}" release are downloaded\n'.format(release.tag_name))
