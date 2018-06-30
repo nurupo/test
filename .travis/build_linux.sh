@@ -273,9 +273,8 @@ build()
     ls -lbh *.AppImage
     mv *.AppImage MyApp_${ARCH}.AppImage
 
-    mkdir /opt/deploy
-    mv *.AppImage /opt/deploy
-    ls -lbh /opt/**
+    mkdir ../deploy
+    mv *.AppImage ../deploy
 }
 
 ARCH=$1
