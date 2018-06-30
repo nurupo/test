@@ -125,7 +125,7 @@ def upload_artifacts(src_dir, release):
 
 def download_artifcats(release, dst_dir):
     print('Downloading artifacts from "{}" release\n'.format(release.tag_name))
-    assets = release.get_assets()
+    assets = [asset for asset in release.get_assets()]
     print('Found {} artifacts in the release\n'.format(len(assets)))
     for asset in assets:
         print('\tDownloading artifact "{}" ({:.1f} MiB)...'.format(
