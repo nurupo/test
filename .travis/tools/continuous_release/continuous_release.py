@@ -172,7 +172,7 @@ def stored_releases(releases, travis_branch, travis_build_number):
     prefix = 'continuous-{}-{}-'.format(travis_branch, travis_build_number)
     releases_stored = [r for r in releases if r.draft and r.tag_name.startswith(
         prefix) and re.match('^\d+$', r.tag_name[len(prefix):])]
-    releases_stored = sorted(releases_stored, key=lambda r: r.tag_name[len(prefix):])
+    releases_stored = sorted(releases_stored, key=lambda r: int(r.tag_name[len(prefix):]))
     return releases_stored
 
 
@@ -201,6 +201,7 @@ def publish_numbered_release(numbered_release_count, releases, artifact_dir, num
     prefix = 'continuous-{}-'.format(travis_branch)
     previous_numbered_releases = [r for r in releases if not r.draft and r.tag_name.startswith(prefix) and re.match(
         '^\d+$', r.tag_name[len(prefix):]) and int(r.tag_name[len(prefix):]) < int(travis_build_number)]
+    previous_numbered_releases = sorted(previous_numbered_releases, key=lambda r: int(r.tag_name[len(prefix):]))
     extra_numbered_releases_to_remove = (
         len(previous_numbered_releases) + 1) - numbered_release_count
     if extra_numbered_releases_to_remove < 0:
@@ -266,8 +267,8 @@ def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_
         github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
     releases_stored_previous = [r for r in releases if r.draft and r.tag_name.startswith(prefix) and re.match('^\d+-\d+$', r.tag_name[len(prefix):]) and int(
         r.tag_name[len(prefix):].split('-')[0]) < int(travis_build_number) and int(r.tag_name[len(prefix):].split('-')[0]) not in branch_unfinished_build_numbers]
-    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: r.tag_name[len(prefix):].split('-')[1])
-    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: r.tag_name[len(prefix):].split('-')[0])
+    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[1]))
+    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
     for release in releases_stored_previous:
         print('Deleting draft release with tag name "{}"...'.format(
             release.tag_name))
