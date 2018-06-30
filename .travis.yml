@@ -54,21 +54,31 @@ matrix:
       # other builds that we skip on non-master fall into one of thse.
     - stage: "Build"
       env: JOB="Linux AppImage amd64"
-      script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
+      script:
+        - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
+        - if [ $TRAVIS_TEST_RESULT -eq 0 ]; test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh; fi
     - stage: "Build"
       env: JOB="Linux AppImage i386"
-      script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh i386
+      script:
+        - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh i386
+        - if [ $TRAVIS_TEST_RESULT -eq 0 ]; test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh; fi
     - stage: "Build"
       env: JOB="Linux AppImage armel"
-      script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armel
+      script:
+        - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armel
+        - if [ $TRAVIS_TEST_RESULT -eq 0 ]; test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh; fi
     - stage: "Build"
       #if: branch = master
       env: JOB="Linux AppImage armhf"
-      script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armhf
+      script:
+        - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armhf
+        - if [ $TRAVIS_TEST_RESULT -eq 0 ]; test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh; fi
     - stage: "Build"
       #if: branch = master
       env: JOB="Linux AppImage arm64"
-      script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
+      script:
+        - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
+        - if [ $TRAVIS_TEST_RESULT -eq 0 ]; test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh; fi
     #- stage: "Build"
       #env: JOB="macOS"
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_macos.sh
@@ -83,12 +93,12 @@ matrix:
   #- test $TRAVIS_BRANCH = "master" && test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_master.sh
   #- test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh
 
-deploy:
-  skip_cleanup: true
-  provider: script
-  script: bash .travis/deploy_store.sh
-  on:
-    all_branches: true
+#deploy:
+#  skip_cleanup: true
+#  provider: script
+#  script: bash .travis/deploy_store.sh
+#  on:
+#    all_branches: true
 
 branches:
   except:
