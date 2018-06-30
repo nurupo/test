@@ -383,12 +383,12 @@ if __name__ == "__main__":
                 raise ContinuousReleaseError('Directory "{}" doesn\'t exist'.format(args.artifact_dir))
             store_artifacts(args.artifact_dir, args.release_name, args.release_body, require_env('GITHUB_ACCESS_TOKEN'),
                             args.github_api_url, travis_url, require_env('TRAVIS_REPO_SLUG'), require_env('TRAVIS_BRANCH'),
-                            require_env('TRAVIS_COMMIT'), require_env('TRAVIS_BUILD_NUMBER'), require_env('TRAVIS_JOB_NUMBER'),
-                            require_env('TRAVIS_JOB_ID'))
+                            require_env('TRAVIS_COMMIT'), require_env('TRAVIS_BUILD_NUMBER'),
+                            require_env('TRAVIS_JOB_NUMBER').split('.')[1], require_env('TRAVIS_JOB_ID'))
         elif args.command == 'collect':
             if not os.path.isdir(args.artifact_dir):
                 raise ContinuousReleaseError('Directory "{}" doesn\'t exist'.format(args.artifact_dir))
-            collect_stored_artifacts(args.artifact_dir, equire_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
+            collect_stored_artifacts(args.artifact_dir, require_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
                                      require_env('TRAVIS_REPO_SLUG'), require_env('TRAVIS_BRANCH'),
                                      require_env('TRAVIS_BUILD_NUMBER'))
         elif args.command == 'cleanup':
