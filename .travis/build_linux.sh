@@ -275,6 +275,7 @@ build()
 
     mkdir /tmp/deploy
     mv *.AppImage /tmp/deploy
+    ls -lbh /tmp/**
 }
 
 ARCH=$1
