@@ -208,12 +208,11 @@ def publish_numbered_release(numbered_release_count, releases, artifact_dir, num
         extra_numbered_releases_to_remove = 0
     print('Found {} numbered releases for "{}" branch. Accounting for the one we are about to make, {} of existing numbered releases must be deleted.'.format(
         len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
-    if extra_numbered_releases_to_remove > 0:
-        for release in previous_numbered_releases[-extra_numbered_releases_to_remove:]:
-            print('Deleting release with tag name {}...'.format(release.tag_name), end='', flush=True)
-            release.delete_release()
-            github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()
-            print(' Done')
+    for release in previous_numbered_releases[:extra_numbered_releases_to_remove]:
+        print('Deleting release with tag name {}...'.format(release.tag_name), end='', flush=True)
+        release.delete_release()
+        github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()
+        print(' Done')
     print('Creating a numbered draft release with tag name "{}"'.format(tag_name))
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name,
