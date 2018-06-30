@@ -84,7 +84,7 @@ matrix:
       #script: sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_macos.sh
     - stage: "Deploy"
       if: repo == head_repo
-      script: bash .travis/deploy_release.sh
+      script: test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_release.sh
 
 #after_success:
     # If PR, upload build results of a PR to a temporary file hosting
