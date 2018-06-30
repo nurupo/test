@@ -98,7 +98,7 @@ matrix:
 #  provider: script
 #  script: bash .travis/deploy_store.sh
 #  on:
-#    all_branches: true
+##    all_branches: true
 
 branches:
   except:
