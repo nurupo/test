@@ -44,7 +44,7 @@ class Travis:
         _branch_name = requests.utils.quote(branch_name, safe='')
         # API doc: https://developer.travis-ci.com/resource/branch
         response = requests.get(
-            '{}/repo/{}/branch/{}'.format(self._api_url, _repo_slug, _branch_name), headers=headers)
+            '{}/repo/{}/branch/{}'.format(self._api_url, _repo_slug, _branch_name), headers=self._headers)
         return response.json()['last_build']['number']
 
     # Returns a list of build numbers of all builds that have not finished for a branch.
