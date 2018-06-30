@@ -170,7 +170,7 @@ def stored_releases(releases, travis_branch, travis_build_number):
     return releases_stored
 
 
-def collect_stored_artifacts(artifact_dir, travis_branch, travis_build_number):
+def collect_stored_artifacts(artifact_dir, github_token, github_api_url, travis_repo_slug, travis_branch, travis_build_number):
     releases = github.Github(github_token, github_api_url).get_repo(
         travis_repo_slug).get_releases()
     releases_stored = stored_releases(
@@ -388,7 +388,9 @@ if __name__ == "__main__":
         elif args.command == 'collect':
             if not os.path.isdir(args.artifact_dir):
                 raise ContinuousReleaseError('Directory "{}" doesn\'t exist'.format(args.artifact_dir))
-            collect_stored_artifacts(args.artifact_dir, require_env('TRAVIS_BRANCH'), require_env('TRAVIS_BUILD_NUMBER'))
+            collect_stored_artifacts(args.artifact_dir, equire_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
+                                     require_env('TRAVIS_REPO_SLUG'), require_env('TRAVIS_BRANCH'),
+                                     require_env('TRAVIS_BUILD_NUMBER'))
         elif args.command == 'cleanup':
             cleanup_draft_releases(require_env('GITHUB_ACCESS_TOKEN'), travis_api_url, require_env('TRAVIS_REPO_SLUG'),
                                    require_env('TRAVIS_BRANCH'), require_env('TRAVIS_BUILD_NUMBER'))
@@ -406,3 +408,4 @@ if __name__ == "__main__":
             raise ContinuousReleaseError('Specify one of "store", "collect", "cleanup" or "publish" commands.')
     except ContinuousReleaseError as e:
         print('Error: {}'.format(str(e)))
+        sys.exit(1)
