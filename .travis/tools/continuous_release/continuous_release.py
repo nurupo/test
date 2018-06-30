@@ -131,7 +131,7 @@ def download_artifcats(release, dst_dir):
         print('\tDownloading artifact "{}" ({:.1f} MiB)...'.format(
             asset.name(), asset.size()/1024/1024))
         start_time = time.time()
-        download_file(asset.browser_download_url(), tmpdir)
+        download_file(asset.browser_download_url(), dst_dir)
         elapsed_time = time.time() - start_time
         print(' Done in {:.2f} seconds\n'.format(elapsed_time))
     print('All artifacts from "{}" release are downloaded\n'.format(release.tag_name()))
@@ -274,7 +274,7 @@ def cleanup_draft_releases(github_token, travis_api_url, travis_repo_slug, travi
 
 
 def publish_releases(artifact_dir, latest_release, latest_release_name, latest_release_body, numbered_release, numbered_release_count, numbered_release_name, numbered_release_body, github_token, github_api_url, travis_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
-    if len(os.listdir(tmp_dir)) <= 0:
+    if len(os.listdir(artifact_dir)) <= 0:
         raise ContinuousReleaseError('No artifacts were downloaded')
     releases = github.Github(github_token, github_api_url).get_repo(
         travis_repo_slug).get_releases()
