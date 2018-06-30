@@ -110,7 +110,7 @@ def download_file(src_url, dst_dir):
 def upload_artifacts(src_dir, release):
     print('Uploading artifacts to "{}" release\n'.format(release.tag_name))
     artifacts = sorted(os.listdir(src_dir))
-    print('Found {} artifacts at "{}"\n'.format(len(artifacts), src_dir))
+    print('Found {} artifacts in "{}" directory\n'.format(len(artifacts), src_dir))
     for artifact in artifacts:
         artifact_path = os.path.join(src_dir, artifact)
         if os.path.isfile(artifact_path):
@@ -201,7 +201,7 @@ def publish_numbered_release(numbered_release_count, releases, artifact_dir, num
     if extra_numbered_releases_to_remove < 0:
         extra_numbered_releases_to_remove = 0
     print('Found {} numbered releases for "{}" branch. Accounting for the one we are about to make, {} of existing numbered releases must be deleted.\n'.format(
-        numbered_release_count, travis_branch, extra_numbered_releases_to_remove))
+        len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
     for release in previous_numbered_releases[-extra_numbered_releases_to_remove:]:
         print('Deleting release with tag name {}...'.format(release.tag_name))
         release.delete_release()
@@ -221,7 +221,7 @@ def publish_numbered_release(numbered_release_count, releases, artifact_dir, num
     upload_artifacts(artifact_dir, release)
     print('Removing the draft flag from the "{}" release\n'.format(tag_name))
     release.update_release(
-        name=release.name(), message=release.message(), draft=False, prerelease=True)
+        name=release.name, message=release.message, draft=False, prerelease=True)
 
 
 def publish_latest_release(releases, artifact_dir, latest_release_name, latest_release_body, github_token, github_api_url, travis_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
@@ -249,7 +249,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
     upload_artifacts(artifact_dir, release)
     print('Removing the draft flag from the "{}" release\n'.format(tag_name))
     release.update_release(
-        name=release.name(), message=release.message(), draft=False, prerelease=True)
+        name=release.name, message=release.message, draft=False, prerelease=True)
 
 
 def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
