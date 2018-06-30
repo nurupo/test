@@ -221,7 +221,7 @@ def publish_numbered_release(numbered_release_count, releases, artifact_dir, num
     upload_artifacts(artifact_dir, release)
     print('Removing the draft flag from the "{}" release\n'.format(tag_name))
     release.update_release(
-        name=release.name, message=release.message, draft=False, prerelease=True)
+        name=release.title, message=release.body, draft=False, prerelease=True)
 
 
 def publish_latest_release(releases, artifact_dir, latest_release_name, latest_release_body, github_token, github_api_url, travis_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
@@ -249,7 +249,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
     upload_artifacts(artifact_dir, release)
     print('Removing the draft flag from the "{}" release\n'.format(tag_name))
     release.update_release(
-        name=release.name, message=release.message, draft=False, prerelease=True)
+        name=release.title, message=release.body, draft=False, prerelease=True)
 
 
 def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
