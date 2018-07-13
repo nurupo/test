@@ -103,7 +103,7 @@ matrix:
 branches:
   except:
     - # Do not build tags that we create when we upload to GitHub Releases
-    - /^continuous-.+$/
+    - /^ci-.+$/
 
 notifications:
   email: false

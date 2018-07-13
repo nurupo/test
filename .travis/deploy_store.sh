@@ -4,6 +4,6 @@ set -exuo pipefail
 
 ARTIFACTS_DIR="${PWD}/deploy"
 
-cd .travis/tools/continuous_release
+cd .travis/tools/ci_release_publisher
 pip install -r requirements.txt
-python ./continuous_release.py store "$ARTIFACTS_DIR"
+python ./ci_release_publisher.py store "$ARTIFACTS_DIR"
