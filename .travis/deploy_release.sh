@@ -5,10 +5,6 @@ set -exuo pipefail
 cd .travis/tools/ci_release_publisher
 pip install -r requirements.txt
 mkdir ./deploy
-python ./ci_release_publisher.py -h
-python ./ci_release_publisher.py collect -h
-python ./ci_release_publisher.py cleanup -h
-python ./ci_release_publisher.py publish -h
 python ./ci_release_publisher.py collect ./deploy
 python ./ci_release_publisher.py cleanup
 python ./ci_release_publisher.py publish --latest-release \
