@@ -242,7 +242,7 @@ def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count
             print(' Done')
         previous_numbered_releases = previous_numbered_releases[extra_numbered_releases_to_remove:]
     if numbered_release_keep_time > 0:
-        expired_previous_numbered_releases = [r for r in previous_numbered_releases and (datetime.datetime.now() - r.created_at).total_seconds() > numbered_release_keep_time]
+        expired_previous_numbered_releases = [r for r in previous_numbered_releases if (datetime.datetime.now() - r.created_at).total_seconds() > numbered_release_keep_time]
         print('Keeping only numbered releases that are not older than {} seconds for "{}" branch.'.format(
             numbered_release_keep_time, travis_branch))
         print('Found {} numbered releases for "{}" branch. {} of them will be deleted due to being too old.'.format(
