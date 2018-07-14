@@ -268,7 +268,7 @@ def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count
         prerelease=numbered_release_prerelease,
         target_commitish=travis_commit)
     upload_artifacts(artifact_dir, release)
-    print('Changing the tag name from "{}" to "{}"{}'.format(tag_name_tmp, tag_name_tmp, '' if numbered_release_draft else ' and removing the draft flag'))
+    print('Changing the tag name from "{}" to "{}"{}'.format(tag_name_tmp, tag_name, '' if numbered_release_draft else ' and removing the draft flag'))
     release.update_release(
         name=release.title, message=release.body, draft=numbered_release_draft, prerelease=numbered_release_prerelease, tag_name=tag_name)
 
@@ -291,7 +291,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=latest_release_name if latest_release_name else
-        'CI build of {} branch'.format(travis_branch),
+        'Latest CI build of {} branch'.format(travis_branch),
         message=latest_release_body if latest_release_body else
         'This is an auto-generated release based on [Travis-CI build #{}]({}/{}/builds/{})'
         .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
@@ -309,7 +309,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
         previous_release[0].delete_release()
         if not previous_release[0].draft:
             github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(previous_release[0].tag_name)).delete()
-    print('Changing the tag name from "{}" to "{}"{}'.format(tag_name_tmp, tag_name_tmp, '' if latest_release_draft else ' and removing the draft flag'))
+    print('Changing the tag name from "{}" to "{}"{}'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
     release.update_release(
         name=release.title, message=release.body, draft=latest_release_draft, prerelease=latest_release_prerelease, tag_name=tag_name)
 
