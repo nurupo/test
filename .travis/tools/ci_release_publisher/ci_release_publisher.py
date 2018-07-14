@@ -235,11 +235,11 @@ def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count
         print('Found {} numbered releases for "{}" branch. Accounting for the one we are about to make, {} of existing numbered releases must be deleted.'.format(
             len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
         for release in previous_numbered_releases[:extra_numbered_releases_to_remove]:
-            print('Deleting release with tag name {}...'.format(release.tag_name), end='', flush=True)
+            print('Deleting release with tag name {}.'.format(release.tag_name))
             release.delete_release()
             if not release.draft:
+                print('Deleting "{}" tag'.format(release.tag_name))
                 github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()
-            print(' Done')
         previous_numbered_releases = previous_numbered_releases[extra_numbered_releases_to_remove:]
     if numbered_release_keep_time > 0:
         expired_previous_numbered_releases = [r for r in previous_numbered_releases if (datetime.datetime.now() - r.created_at).total_seconds() > numbered_release_keep_time]
@@ -248,11 +248,11 @@ def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count
         print('Found {} numbered releases for "{}" branch. {} of them will be deleted due to being too old.'.format(
             len(previous_numbered_releases), travis_branch, len(expired_previous_numbered_releases)))
         for release in expired_previous_numbered_releases:
-            print('Deleting release with tag name {}...'.format(release.tag_name), end='', flush=True)
+            print('Deleting release with tag name {}.'.format(release.tag_name))
             release.delete_release()
             if not release.draft:
+                print('Deleting "{}" tag'.format(release.tag_name))
                 github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()
-            print(' Done')
         previous_numbered_releases = [r for r in previous_numbered_releases if r not in expired_previous_numbered_releases]
     tag_name_tmp = '_{}'.format(tag_name)
     print('Creating a numbered draft release with tag name "{}"'.format(tag_name_tmp))
@@ -305,10 +305,10 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
         return
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
-        print('Deleting the previous "{}" release'.format(tag_name))
+        print('Deleting the previous "{}" release'.format(previous_release[0].tag_name))
         previous_release[0].delete_release()
         if not previous_release[0].draft:
-            print('Depeting "{}" tag'.format(tag_name))
+            print('Deleting "{}" tag'.format(previous_release[0].tag_name))
             github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(previous_release[0].tag_name)).delete()
     print('Changing the tag name from "{}" to "{}"{}'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
     release.update_release(
