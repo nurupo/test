@@ -308,6 +308,7 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
         print('Deleting the previous "{}" release'.format(tag_name))
         previous_release[0].delete_release()
         if not previous_release[0].draft:
+            print('Depeting "{}" tag'.format(tag_name))
             github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(previous_release[0].tag_name)).delete()
     print('Changing the tag name from "{}" to "{}"{}'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
     release.update_release(
