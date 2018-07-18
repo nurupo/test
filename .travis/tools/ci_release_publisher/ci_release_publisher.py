@@ -199,9 +199,9 @@ def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_
     releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[1]))
     releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
     for release in releases_stored_previous:
-        release.delete_release()
+        delete_release(release, github_token, github_api_url, travis_repo_slug)
     for release in stored_releases(releases, travis_branch, travis_build_number):
-        release.delete_release()
+        delete_release(release, github_token, github_api_url, travis_repo_slug)
     print('All draft releases created to store per-job atifacts are deleted.')
 
 def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count, numbered_release_keep_time, numbered_release_name, numbered_release_body, numbered_release_draft, numbered_release_prerelease, github_token, github_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
