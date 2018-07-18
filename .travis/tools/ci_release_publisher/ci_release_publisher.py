@@ -136,7 +136,7 @@ def upload_artifacts(src_dir, release):
             start_time = time.time()
             release.upload_asset(artifact_path)
             elapsed_time = time.time() - start_time
-            print(' Done in {:.2f} seconds'.format(elapsed_time))
+            print(' Done in {:.2f} seconds.'.format(elapsed_time))
     print('All artifacts for "{}" release are uploaded.'.format(release.tag_name))
 
 def delete_release(release, github_token, github_api_url, travis_repo_slug):
@@ -144,7 +144,7 @@ def delete_release(release, github_token, github_api_url, travis_repo_slug):
     release.delete_release()
     # Published releases create tags and we don't want to keep the tags
     if not release.draft:
-        print('Deleting "{}" tag'.format(release.tag_name))
+        print('Deleting "{}" tag.'.format(release.tag_name))
         github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()
 
 def store_artifacts(artifact_dir, release_name, release_body, github_token, github_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_job_number, travis_job_id):
