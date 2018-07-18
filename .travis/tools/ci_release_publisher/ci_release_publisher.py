@@ -158,7 +158,7 @@ def store_artifacts(artifact_dir, release_name, release_body, github_token, gith
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name,
         name=release_name if release_name else
-             'Temporary draft release storing artifacts of {}-{} job'
+             'Temporary draft release storing build artifacts'
              .format(travis_build_number, travis_job_number),
         message=release_body if release_body else
                 ('Auto-generated temporary draft release containing build artifacts of [Travis-CI job #{}]({}/{}/jobs/{}).\n\n'
@@ -460,7 +460,7 @@ if __name__ == "__main__":
                                        required_env('TRAVIS_BUILD_ID'))
             if args.tag_release:
                 publish_tag_release(releases, args.artifact_dir, args.tag_release_name, args.tag_release_body, args.tag_release_draft,
-                                    args.tag_release_prereleasee, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
+                                    args.tag_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
                                     travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_ID'),
                                     optional_env('TRAVIS_TAG'))
         else:
