@@ -36,8 +36,8 @@ matrix:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
         - test $TRAVIS_TEST_RESULT -eq 0 && test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_store.sh
     - stage: "Deploy"
-      if: repo == head_repo
-      script: test $TRAVIS_PULL_REQUEST = "false" && bash .travis/deploy_release.sh
+      if: type != pull_request
+      script: bash .travis/deploy_release.sh
 
 branches:
   except:
