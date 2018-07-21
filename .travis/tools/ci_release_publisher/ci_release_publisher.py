@@ -187,20 +187,24 @@ def collect_stored_artifacts(artifact_dir, github_token, github_api_url, travis_
     for release in releases_stored:
         download_artifcats(github_token, release, artifact_dir)
 
-def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
+def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number, travis_tag):
     releases = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_releases()
     print('* Deleting draft releases created to store per-job atifacts.')
-    prefix = 'ci-{}-'.format(travis_branch)
-    # We don't want to delete releases being used by another build running for this branch, so let's find out which builds are running
-    # and skip deleting releases for them.
-    branch_unfinished_build_numbers = Travis.github_auth(github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
-    releases_stored_previous = [r for r in releases if r.draft and r.tag_name.startswith(prefix) and re.match('^\d+-\d+$', r.tag_name[len(prefix):]) and
-        int(r.tag_name[len(prefix):].split('-')[0]) < int(travis_build_number) and int(r.tag_name[len(prefix):].split('-')[0]) not in branch_unfinished_build_numbers]
-    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[1]))
-    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
-    for release in releases_stored_previous:
-        delete_release(release, github_token, github_api_url, travis_repo_slug)
-    for release in stored_releases(releases, travis_branch, travis_build_number):
+    # When a tag is pushed, we create ci-<tag>-<build_number> releases
+    # When no tag is pushed, we create ci-<branch_name>-<build_number> releases
+    prefix = 'ci-{}-'.format(travis_branch is not travis_tag else travis_tag)
+    # If this build is caused by a tag push, then we don't want to clean up previous stored releases
+    if not travis_tag:
+        # We don't want to delete releases being used by another build running for this branch, so let's find out which builds are running
+        # and skip deleting releases for them.
+        branch_unfinished_build_numbers = Travis.github_auth(github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
+        releases_stored_previous = [r for r in releases if r.draft and r.tag_name.startswith(prefix) and re.match('^\d+-\d+$', r.tag_name[len(prefix):]) and
+            int(r.tag_name[len(prefix):].split('-')[0]) < int(travis_build_number) and int(r.tag_name[len(prefix):].split('-')[0]) not in branch_unfinished_build_numbers]
+        releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[1]))
+        releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
+        for release in releases_stored_previous:
+            delete_release(release, github_token, github_api_url, travis_repo_slug)
+    for release in stored_releases(releases, travis_branch is not travis_tag else travis_tag, travis_build_number):
         delete_release(release, github_token, github_api_url, travis_repo_slug)
     print('All draft releases created to store per-job atifacts are deleted.')
 
@@ -430,7 +434,7 @@ if __name__ == "__main__":
         elif args.command == 'cleanup':
             cleanup_draft_releases(required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url, travis_api_url,
                                    required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_BRANCH'),
-                                   required_env('TRAVIS_BUILD_NUMBER'))
+                                   required_env('TRAVIS_BUILD_NUMBER'), optional_env('TRAVIS_TAG'))
         elif args.command == 'publish':
             if not os.path.isdir(args.artifact_dir):
                 raise CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
