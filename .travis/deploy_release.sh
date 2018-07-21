@@ -11,9 +11,6 @@ python ./ci_release_publisher.py publish --latest-release \
                                          --latest-release-prerelease \
                                          --numbered-release \
                                          --numbered-release-keep-count 3 \
-                                         --numbered-release-keep-time "$((24 * 60 * 60))" \
                                          --numbered-release-prerelease \
                                          --tag-release \
-                                         --tag-release-draft \
-                                         --tag-release-prerelease \
                                          ./deploy
