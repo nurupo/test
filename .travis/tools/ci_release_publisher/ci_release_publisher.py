@@ -190,9 +190,9 @@ def collect_stored_artifacts(artifact_dir, github_token, github_api_url, travis_
 def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number, travis_tag):
     releases = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_releases()
     print('* Deleting draft releases created to store per-job atifacts.')
-    # When a tag is pushed, we create ci-<tag>-<build_number> releases
-    # When no tag is pushed, we create ci-<branch_name>-<build_number> releases
-    prefix = 'ci-{}-'.format(travis_branch is not travis_tag else travis_tag)
+    # When a tag is pushed, we create ci-<tag>-<build_number>-<job_number> releases
+    # When no tag is pushed, we create ci-<branch_name>-<build_number>-<job_number> releases
+    prefix = 'ci-{}-'.format(travis_branch if not travis_tag else travis_tag)
     # If this build is caused by a tag push, then we don't want to clean up previous stored releases
     if not travis_tag:
         # We don't want to delete releases being used by another build running for this branch, so let's find out which builds are running
@@ -204,7 +204,7 @@ def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_
         releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
         for release in releases_stored_previous:
             delete_release(release, github_token, github_api_url, travis_repo_slug)
-    for release in stored_releases(releases, travis_branch is not travis_tag else travis_tag, travis_build_number):
+    for release in stored_releases(releases, travis_branch if not travis_tag else travis_tag, travis_build_number):
         delete_release(release, github_token, github_api_url, travis_repo_slug)
     print('All draft releases created to store per-job atifacts are deleted.')
 
