@@ -13,6 +13,5 @@ python ./ci_release_publisher.py publish --latest-release \
                                          --numbered-release-keep-count 3 \
                                          --numbered-release-prerelease \
                                          --tag-release \
+                                         --tag-release-draft \
                                          ./deploy
-
-
