@@ -158,8 +158,8 @@ def store_artifacts(artifact_dir, release_name, release_body, github_token, gith
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name,
         name=release_name if release_name else
-             'Temporary draft release storing build artifacts'
-             .format(travis_build_number, travis_job_number),
+             'Temporary draft release {}'
+             .format(tag_name),
         message=release_body if release_body else
                 ('Auto-generated temporary draft release containing build artifacts of [Travis-CI job #{}]({}/{}/jobs/{}).\n\n'
                 'This release was created by `ci_release_publisher.py store` and will be automatically deleted by `ci_release_publisher.py cleanup` command, '
@@ -450,23 +450,25 @@ if __name__ == "__main__":
             if len(os.listdir(args.artifact_dir)) <= 0:
                 raise CIReleasePublisherError('No artifacts were found in "{}" directory.'.format(args.artifact_dir))
             releases = github.Github(login_or_token=required_env('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(required_env('TRAVIS_REPO_SLUG')).get_releases()
-            if args.numbered_release:
-                publish_numbered_release(releases, args.artifact_dir, args.numbered_release_keep_count, args.numbered_release_keep_time,
-                                         args.numbered_release_name, args.numbered_release_body, args.numbered_release_draft,
-                                         args.numbered_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
-                                         travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_BRANCH'),
-                                         required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'), required_env('TRAVIS_BUILD_ID'))
-            if args.latest_release:
-                publish_latest_release(releases, args.artifact_dir, args.latest_release_name, args.latest_release_body,
-                                       args.latest_release_draft, args.latest_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'),
-                                       args.github_api_url, travis_api_url, travis_url, required_env('TRAVIS_REPO_SLUG'),
-                                       required_env('TRAVIS_BRANCH'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'),
-                                       required_env('TRAVIS_BUILD_ID'))
-            if args.tag_release:
-                publish_tag_release(releases, args.artifact_dir, args.tag_release_name, args.tag_release_body, args.tag_release_draft,
-                                    args.tag_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
-                                    travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_ID'),
-                                    optional_env('TRAVIS_TAG'))
+            if optional_env('TRAVIS_TAG'):
+                if args.tag_release:
+                    publish_tag_release(releases, args.artifact_dir, args.tag_release_name, args.tag_release_body, args.tag_release_draft,
+                                        args.tag_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
+                                        travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_ID'),
+                                        optional_env('TRAVIS_TAG'))
+            else:
+                if args.numbered_release:
+                    publish_numbered_release(releases, args.artifact_dir, args.numbered_release_keep_count, args.numbered_release_keep_time,
+                                            args.numbered_release_name, args.numbered_release_body, args.numbered_release_draft,
+                                            args.numbered_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
+                                            travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_BRANCH'),
+                                            required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'), required_env('TRAVIS_BUILD_ID'))
+                if args.latest_release:
+                    publish_latest_release(releases, args.artifact_dir, args.latest_release_name, args.latest_release_body,
+                                        args.latest_release_draft, args.latest_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'),
+                                        args.github_api_url, travis_api_url, travis_url, required_env('TRAVIS_REPO_SLUG'),
+                                        required_env('TRAVIS_BRANCH'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'),
+                                        required_env('TRAVIS_BUILD_ID'))
         else:
             raise CIReleasePublisherError('Specify one of "store", "collect", "cleanup" or "publish" commands.')
     except CIReleasePublisherError as e:
