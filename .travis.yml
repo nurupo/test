@@ -46,7 +46,7 @@ deploy:
   skip_cleanup: true
   target_commitish: $TRAVIS_COMMIT
   prerelease: true
-  draft=true
+  draft: true
   body: $TEST
   on:
     repo: nurupo/test
