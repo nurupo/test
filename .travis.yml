@@ -39,6 +39,7 @@ deploy:
   skip_cleanup: true
   on:
     repo: nurupo/test
+    branch: test3
 
 notifications:
   email: false
