@@ -34,7 +34,7 @@ matrix:
 before_deploy:
   - git tag -f travis-dev-build-2
   - git remote add gh https://${TRAVIS_REPO_SLUG%/*}:${GITHUB_ACCESS_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
-  - git push -f gh travis-dev-build
+  - git push -f gh travis-dev-build-2
   - git remote remove gh
   - export TEST="some\ntest\ndescription"
 
