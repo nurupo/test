@@ -31,12 +31,12 @@ matrix:
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
 
-before_deploy:
-  - git tag -f travis-dev-build-2
-  - git remote add gh https://${TRAVIS_REPO_SLUG%/*}:${GITHUB_ACCESS_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
-  - git push -f gh travis-dev-build-2
-  - git remote remove gh
-  - export TEST="some\ntest\ndescription"
+#before_deploy:
+#  - git tag -f travis-dev-build-2
+#  - git remote add gh https://${TRAVIS_REPO_SLUG%/*}:${GITHUB_ACCESS_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
+#  - git push -f gh travis-dev-build-2
+#  - git remote remove gh
+#  - export TEST="some\ntest\ndescription"
 
 deploy:
   provider: releases
@@ -45,16 +45,17 @@ deploy:
   file_glob: true
   skip_cleanup: true
   target_commitish: $TRAVIS_COMMIT
-  prerelease: true
-  draft: true
-  body: $TEST
+#  prerelease: true
+#  draft: true
+#  body: $TEST
   on:
     repo: nurupo/test
     branch: test3
+    tags: true
 
-branches:
-  except:
-    - travis-dev-build-2
+#branches:
+#  except:
+#    - travis-dev-build-2
 
 notifications:
   email: false
