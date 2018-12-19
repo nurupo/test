@@ -11,7 +11,7 @@ import time
 
 # Apparently there is no Traivis API python library that supports the latest API version (v3)
 # There is travispy, it supports v2 (v2 is being phased out this (2018) year) and it doesn't
-# allow to get the info we need, so we roll out our own awefully specific Travis API class.
+# allow to get the info we need, so we roll out our own awfully specific Travis API class.
 class Travis:
     _headers = {
         'Travis-API-Version': '3',
@@ -26,9 +26,9 @@ class Travis:
     def github_auth(cls, github_token, travis_api_url):
         # We have to use API 2.1 to get Travis-CI token based on GitHub token.
         # See https://github.com/travis-ci/travis-ci/issues/9273.
-        # API 2.1 is supposedly getting deprecaed sometime in 2018, so hopefully they will add
-        # a similar endpoint to version 3 of the API. If not, we can always use the Travis API token,
-        # it's just a bit less convenient.
+        # API 2.1 is supposedly getting deprecated sometime in 2018, so hopefully a similar endpoint
+        # will be added to the version 3 of the API. If not, we can start requiring the user to
+        # provide their Travis API token in the future.
         headers = {
             'Accept': 'application/vnd.travis-ci.2.1+json',
             'User-Agent': cls._headers['User-Agent'],
@@ -46,7 +46,7 @@ class Travis:
         return response.json()['last_build']['number']
 
     # Returns a list of build numbers of all builds that have not finished for a branch.
-    # "not finished" bascially means that a build is active (queued/running) and it's not a restarted
+    # "not finished" basically means that a build is active (queued/running) and it's not a restarted
     # build as restarted builds have the finished flag set in the past by their first run.
     def branch_unfinished_build_numbers(self, repo_slug, branch_name):
         _repo_slug = requests.utils.quote(repo_slug, safe='')
@@ -139,7 +139,7 @@ def upload_artifacts(src_dir, release):
             print(' Done in {:.2f} seconds.'.format(elapsed_time))
     print('All artifacts for "{}" release are uploaded.'.format(release.tag_name))
 
-def delete_release(release, github_token, github_api_url, travis_repo_slug):
+def delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug):
     print('Deleting {}release with tag name {}.'.format('draft ' if release.draft else '', release.tag_name))
     release.delete_release()
     # Published releases create tags and we don't want to keep the tags
@@ -158,8 +158,8 @@ def store_artifacts(artifact_dir, release_name, release_body, github_token, gith
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name,
         name=release_name if release_name else
-             'Temporary draft release storing build artifacts'
-             .format(travis_build_number, travis_job_number),
+             'Temporary draft release {}'
+             .format(tag_name),
         message=release_body if release_body else
                 ('Auto-generated temporary draft release containing build artifacts of [Travis-CI job #{}]({}/{}/jobs/{}).\n\n'
                 'This release was created by `ci_release_publisher.py store` and will be automatically deleted by `ci_release_publisher.py cleanup` command, '
@@ -187,22 +187,26 @@ def collect_stored_artifacts(artifact_dir, github_token, github_api_url, travis_
     for release in releases_stored:
         download_artifcats(github_token, release, artifact_dir)
 
-def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
+def cleanup_draft_releases(github_token, github_api_url, travis_api_url, travis_repo_slug, travis_branch, travis_build_number, travis_tag):
     releases = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_releases()
-    print('* Deleting draft releases created to store per-job atifacts.')
-    prefix = 'ci-{}-'.format(travis_branch)
-    # We don't want to delete releases being used by another build running for this branch, so let's find out which builds are running
-    # and skip deleting releases for them.
-    branch_unfinished_build_numbers = Travis.github_auth(github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
-    releases_stored_previous = [r for r in releases if r.draft and r.tag_name.startswith(prefix) and re.match('^\d+-\d+$', r.tag_name[len(prefix):]) and
-        int(r.tag_name[len(prefix):].split('-')[0]) < int(travis_build_number) and int(r.tag_name[len(prefix):].split('-')[0]) not in branch_unfinished_build_numbers]
-    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[1]))
-    releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
-    for release in releases_stored_previous:
-        delete_release(release, github_token, github_api_url, travis_repo_slug)
-    for release in stored_releases(releases, travis_branch, travis_build_number):
-        delete_release(release, github_token, github_api_url, travis_repo_slug)
-    print('All draft releases created to store per-job atifacts are deleted.')
+    print('* Deleting draft releases created to store per-job artifacts.')
+    # When a tag is pushed, we create ci-<tag>-<build_number>-<job_number> releases
+    # When no tag is pushed, we create ci-<branch_name>-<build_number>-<job_number> releases
+    prefix = 'ci-{}-'.format(travis_branch if not travis_tag else travis_tag)
+    # If this build is caused by a tag push, then we don't want to clean up previous stored releases
+    if not travis_tag:
+        # We don't want to delete releases being used by another build running for this branch, so let's find out which builds are running
+        # and skip deleting releases for them.
+        branch_unfinished_build_numbers = Travis.github_auth(github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
+        releases_stored_previous = [r for r in releases if r.draft and r.tag_name.startswith(prefix) and re.match('^\d+-\d+$', r.tag_name[len(prefix):]) and
+            int(r.tag_name[len(prefix):].split('-')[0]) < int(travis_build_number) and int(r.tag_name[len(prefix):].split('-')[0]) not in branch_unfinished_build_numbers]
+        releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[1]))
+        releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(r.tag_name[len(prefix):].split('-')[0]))
+        for release in releases_stored_previous:
+            delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+    for release in stored_releases(releases, travis_branch if not travis_tag else travis_tag, travis_build_number):
+        delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+    print('All draft releases created to store per-job artifacts are deleted.')
 
 def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count, numbered_release_keep_time, numbered_release_name, numbered_release_body, numbered_release_draft, numbered_release_prerelease, github_token, github_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
     tag_name = 'ci-{}-{}'.format(travis_branch, travis_build_number)
@@ -221,7 +225,7 @@ def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count
         print('Found {} numbered releases for "{}" branch. Accounting for the one we are about to make, {} of existing numbered releases must be deleted.'.format(
             len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
         for release in previous_numbered_releases[:extra_numbered_releases_to_remove]:
-            delete_release(release, github_token, github_api_url, travis_repo_slug)
+            delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
         previous_numbered_releases = previous_numbered_releases[extra_numbered_releases_to_remove:]
     if numbered_release_keep_time > 0:
         expired_previous_numbered_releases = [r for r in previous_numbered_releases if (datetime.datetime.now() - r.created_at).total_seconds() > numbered_release_keep_time]
@@ -229,7 +233,7 @@ def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count
         print('Found {} numbered releases for "{}" branch. {} of them will be deleted due to being too old.'.format(
             len(previous_numbered_releases), travis_branch, len(expired_previous_numbered_releases)))
         for release in expired_previous_numbered_releases:
-            delete_release(release, github_token, github_api_url, travis_repo_slug)
+            delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
         previous_numbered_releases = [r for r in previous_numbered_releases if r not in expired_previous_numbered_releases]
     tag_name_tmp = '_{}'.format(tag_name)
     print('Creating a numbered draft release with tag name "{}".'.format(tag_name_tmp))
@@ -247,18 +251,20 @@ def publish_numbered_release(releases, artifact_dir, numbered_release_keep_count
     print('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if numbered_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=numbered_release_draft, prerelease=numbered_release_prerelease, tag_name=tag_name)
 
+def is_latest_build_for_branch(github_token, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
+    return int(Travis.github_auth(github_token, travis_api_url).branch_last_build_number(travis_repo_slug, travis_branch)) == int(travis_build_number)
+
 def publish_latest_release(releases, artifact_dir, latest_release_name, latest_release_body, latest_release_draft, latest_release_prerelease, github_token, github_api_url, travis_api_url, travis_url, travis_repo_slug, travis_branch, travis_commit, travis_build_number, travis_build_id):
     tag_name = 'ci-{}-latest'.format(travis_branch)
     print('* Starting the procedure of creating/updating a latest release with tag name "{}".'.format(tag_name))
 
-    def there_is_a_newer_build_for_this_branch():
-      if int(Travis.github_auth(github_token, travis_api_url).branch_last_build_number(travis_repo_slug, travis_branch)) != int(travis_build_number):
-          print('Not creating/updating the "{}" release because there is a newer build for "{}" branch running on Travis-CI.'.format(tag_name, travis_branch))
-          print('We would either overwrite the artifacts uploaded by the newer build or mess up the release due to a race condition of both builds updating the release at the same time.')
-          return True
-      return False
+    def _is_latest_build_for_branch():
+        if is_latest_build_for_branch(github_token, travis_api_url, travis_repo_slug, travis_branch, travis_build_number):
+            return True
+        print('Not creating/updating the "{}" release because there is a newer build for "{}" branch running on Travis-CI.'.format(tag_name, travis_branch))
+        return False
 
-    if there_is_a_newer_build_for_this_branch():
+    if not _is_latest_build_for_branch():
         return
     tag_name_tmp = '_{}'.format(tag_name)
     print('Creating a draft release with tag name "{}".'.format(tag_name_tmp))
@@ -273,17 +279,15 @@ def publish_latest_release(releases, artifact_dir, latest_release_name, latest_r
         prerelease=latest_release_prerelease,
         target_commitish=travis_commit)
     upload_artifacts(artifact_dir, release)
-    if there_is_a_newer_build_for_this_branch():
-        print('Deleting the "{}" draft release.'.format(tag_name_tmp))
-        release.delete_release()
+    if not _is_latest_build_for_branch():
+        delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
         return
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
-        delete_release(previous_release[0], github_token, github_api_url, travis_repo_slug)
+        delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
     print('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
     release.update_release(
         name=release.title, message=release.body, draft=latest_release_draft, prerelease=latest_release_prerelease, tag_name=tag_name)
-
 
 def publish_tag_release(releases, artifact_dir, tag_release_name, tag_release_body, tag_release_draft, tag_release_prerelease, github_token, github_api_url, travis_url, travis_repo_slug, travis_commit, travis_build_id, travis_tag):
     print('* Starting the procedure of creating a tag release.')
@@ -292,11 +296,19 @@ def publish_tag_release(releases, artifact_dir, tag_release_name, tag_release_bo
         return
     print('Tag "{}" was pushed.'.format(travis_tag))
     tag_name = travis_tag
-    if any(release.tag_name == tag_name for release in releases):
-        raise CIReleasePublisherError('Release with tag name "{}" already exists. Was this job restarted? We don\'t support restarts.'.format(tag_name))
-    print('Creating a draft release with tag name "{}".'.format(tag_name))
+
+    def _is_latest_build_for_branch():
+        if is_latest_build_for_branch(github_token, travis_api_url, travis_repo_slug, travis_tag, travis_build_number):
+            return True
+        print('Not creating/updating the "{}" release because there is a newer build for "{}" tag running on Travis-CI.'.format(tag_name, travis_tag))
+        return False
+
+    if not _is_latest_build_for_branch():
+        return
+    tag_name_tmp = '_{}'.format(tag_name)
+    print('Creating a draft release with tag name "{}".'.format(tag_name_tmp))
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
-        tag=tag_name,
+        tag=tag_name_tmp,
         name=tag_release_name if tag_release_name else tag_name,
         message=tag_release_body if tag_release_body else
                 'This is an auto-generated release based on [Travis-CI build #{}]({}/{}/builds/{})'
@@ -305,9 +317,17 @@ def publish_tag_release(releases, artifact_dir, tag_release_name, tag_release_bo
         prerelease=tag_release_prerelease,
         target_commitish=travis_commit)
     upload_artifacts(artifact_dir, release)
-    if not tag_release_draft:
-        print('Removing the draft flag from the "{}" release.'.format(tag_name))
-        release.update_release(name=release.title, message=release.body, draft=tag_release_draft, prerelease=tag_release_prerelease)
+    if not _is_latest_build_for_branch():
+        delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+        return
+    previous_release = [r for r in releases if r.tag_name == tag_name]
+    if previous_release:
+        # Delete release but keep the tag, since in Tag Releases the user specifies the tag and it was just pushed
+        print('Deleting release with tag name {}.'.format(tag_name))
+        previous_release[0].delete_release()
+    print('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if tag_release_draft else ' and removing the draft flag'))
+    release.update_release(
+        name=release.title, message=release.body, draft=tag_release_draft, prerelease=tag_release_prerelease, tag_name=tag_name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='CI release publisher for GitHub+Travis-CI.')
@@ -329,13 +349,13 @@ if __name__ == "__main__":
 
     # store subparser
     parser_store = subparsers.add_parser('store', help='Store job artifacts in a draft release for the later collection.')
-    parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a direcotry containing artifacts that need to be stored.')
+    parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory containing artifacts that need to be stored.')
     parser_store.add_argument('--release-name', type=str, help='Release name text. If not specified a predefined text is used.')
     parser_store.add_argument('--release-body', type=str, help='Release body text. If not specified a predefined text is used.')
 
     # collect subparser
     parser_collect = subparsers.add_parser('collect', help='Collect the previously stored build artifacts in a directory.')
-    parser_collect.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a direcotry where artifacts should be collected to.')
+    parser_collect.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory where artifacts should be collected to.')
 
     # cleanup subparser
     parser_collect = subparsers.add_parser('cleanup',
@@ -344,7 +364,7 @@ if __name__ == "__main__":
 
     # publsh subparser
     parser_publish = subparsers.add_parser('publish', help='Publish a release with all artifacts from a directory.')
-    parser_publish.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a direcotry containing build artifacts to publish.')
+    parser_publish.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory containing build artifacts to publish.')
 
     # publsh subparser -- latest release
     parser_publish.add_argument('--latest-release', dest='latest_release', action='store_true',
@@ -430,7 +450,7 @@ if __name__ == "__main__":
         elif args.command == 'cleanup':
             cleanup_draft_releases(required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url, travis_api_url,
                                    required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_BRANCH'),
-                                   required_env('TRAVIS_BUILD_NUMBER'))
+                                   required_env('TRAVIS_BUILD_NUMBER'), optional_env('TRAVIS_TAG'))
         elif args.command == 'publish':
             if not os.path.isdir(args.artifact_dir):
                 raise CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
@@ -446,23 +466,25 @@ if __name__ == "__main__":
             if len(os.listdir(args.artifact_dir)) <= 0:
                 raise CIReleasePublisherError('No artifacts were found in "{}" directory.'.format(args.artifact_dir))
             releases = github.Github(login_or_token=required_env('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(required_env('TRAVIS_REPO_SLUG')).get_releases()
-            if args.numbered_release:
-                publish_numbered_release(releases, args.artifact_dir, args.numbered_release_keep_count, args.numbered_release_keep_time,
-                                         args.numbered_release_name, args.numbered_release_body, args.numbered_release_draft,
-                                         args.numbered_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
-                                         travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_BRANCH'),
-                                         required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'), required_env('TRAVIS_BUILD_ID'))
-            if args.latest_release:
-                publish_latest_release(releases, args.artifact_dir, args.latest_release_name, args.latest_release_body,
-                                       args.latest_release_draft, args.latest_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'),
-                                       args.github_api_url, travis_api_url, travis_url, required_env('TRAVIS_REPO_SLUG'),
-                                       required_env('TRAVIS_BRANCH'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'),
-                                       required_env('TRAVIS_BUILD_ID'))
-            if args.tag_release:
-                publish_tag_release(releases, args.artifact_dir, args.tag_release_name, args.tag_release_body, args.tag_release_draft,
-                                    args.tag_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
-                                    travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_ID'),
-                                    optional_env('TRAVIS_TAG'))
+            if optional_env('TRAVIS_TAG'):
+                if args.tag_release:
+                    publish_tag_release(releases, args.artifact_dir, args.tag_release_name, args.tag_release_body, args.tag_release_draft,
+                                        args.tag_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
+                                        travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_ID'),
+                                        optional_env('TRAVIS_TAG'))
+            else:
+                if args.numbered_release:
+                    publish_numbered_release(releases, args.artifact_dir, args.numbered_release_keep_count, args.numbered_release_keep_time,
+                                            args.numbered_release_name, args.numbered_release_body, args.numbered_release_draft,
+                                            args.numbered_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'), args.github_api_url,
+                                            travis_url, required_env('TRAVIS_REPO_SLUG'), required_env('TRAVIS_BRANCH'),
+                                            required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'), required_env('TRAVIS_BUILD_ID'))
+                if args.latest_release:
+                    publish_latest_release(releases, args.artifact_dir, args.latest_release_name, args.latest_release_body,
+                                        args.latest_release_draft, args.latest_release_prerelease, required_env('GITHUB_ACCESS_TOKEN'),
+                                        args.github_api_url, travis_api_url, travis_url, required_env('TRAVIS_REPO_SLUG'),
+                                        required_env('TRAVIS_BRANCH'), required_env('TRAVIS_COMMIT'), required_env('TRAVIS_BUILD_NUMBER'),
+                                        required_env('TRAVIS_BUILD_ID'))
         else:
             raise CIReleasePublisherError('Specify one of "store", "collect", "cleanup" or "publish" commands.')
     except CIReleasePublisherError as e:

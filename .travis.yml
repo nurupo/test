@@ -14,66 +14,36 @@ matrix:
       env: JOB="Linux AppImage amd64"
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
+        - .travis/deploy_store.sh
     - stage: "Build"
       env: JOB="Linux AppImage i386"
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh i386
+        - .travis/deploy_store.sh
     - stage: "Build"
       env: JOB="Linux AppImage armel"
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armel
+        - .travis/deploy_store.sh
     - stage: "Build"
       env: JOB="Linux AppImage armhf"
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armhf
+        - .travis/deploy_store.sh
     - stage: "Build"
       env: JOB="Linux AppImage arm64"
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
+        - .travis/deploy_store.sh
+    - stage: "Deploy"
+      if: type != pull_request
+      script:
+        - .travis/deploy_release.sh
 
-#before_deploy:
-#  - git tag -f travis-dev-build-2
-#  - git remote add gh https://${TRAVIS_REPO_SLUG%/*}:${GITHUB_ACCESS_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
-#  - git push -f gh travis-dev-build-2
-#  - git remote remove gh
-#  - export TEST="some\ntest\ndescription"
-
-deploy:
-  provider: releases
-  api_key: $GITHUB_ACCESS_TOKEN
-  file: deploy/*
-  file_glob: true
-  skip_cleanup: true
-  target_commitish: $TRAVIS_COMMIT
-#  prerelease: true
-#  draft: true
-#  body: $TEST
-  on:
-    repo: nurupo/test
-    branch: test3
-    tags: true
-
-#branches:
-#  except:
-#    - travis-dev-build-2
+branches:
+  except:
+    - # Do not run Travis-CI builds on tags the publishing script creates (will lead to endless (recursive?) publishing)
+    - /^ci-.+$/
 
 notifications:
   email: false
-
-# test4
-# test3
-# test2
-# test1
-# test0
-# test1
-# test2
-# test3
-# test4
-# test3
-# test2
-# test1
-# test0
-# test1
-# test2
-# test3
-# test4
