@@ -7,7 +7,7 @@ if [ "$TRAVIS_TEST_RESULT" != "0" ]; then
   exit 0
 fi
 
-if [ "$TRAVIS_TEST_RESULT" != "false" ]; then
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
   echo "Skipping publishing in a Pull Request"
   exit 0
 fi
