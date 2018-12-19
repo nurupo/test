@@ -2,7 +2,7 @@
 
 set -exuo pipefail
 
-if [ "$TRAVIS_TEST_RESULT" != "0" ]; then
+if [ -z "$TRAVIS_TEST_RESULT" ] && [ "$TRAVIS_TEST_RESULT" != "0" ]; then
   echo "Build has failed, skipping publishing"
   exit 0
 fi
