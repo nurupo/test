@@ -17,7 +17,7 @@ if [ "$#" != "1" ]; then
   exit 1
 fi
 
-ARTIFACTS_DIR="$(realpath $1)"
+ARTIFACTS_DIR="$(readlink -f -- $1)"
 
 cd .travis/tools/ci_release_publisher
 pip install -r requirements.txt
