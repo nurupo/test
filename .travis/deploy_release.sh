@@ -15,6 +15,10 @@ fi
 cd .travis/tools/ci_release_publisher
 pip install -r requirements.txt
 ARTIFACTS_DIR="$(mktemp -d)"
+python ./ci_release_publisher.py --help
+python ./ci_release_publisher.py collect --help
+python ./ci_release_publisher.py cleanup --help
+python ./ci_release_publisher.py publish --help
 python ./ci_release_publisher.py collect "$ARTIFACTS_DIR"
 python ./ci_release_publisher.py cleanup
 python ./ci_release_publisher.py publish --latest-release \
