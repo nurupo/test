@@ -90,9 +90,9 @@ try:
             branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_TAG'))
         else:
             branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_BRANCH'))
-        temporary_draft_release.cleanup(releases, branch_unfinished_build_numbers, github_api_url)
+        temporary_draft_release.cleanup(releases, branch_unfinished_build_numbers, args.github_api_url)
         for r in release_kinds:
-            r.cleanup(releases, branch_unfinished_build_numbers, github_api_url)
+            r.cleanup(releases, branch_unfinished_build_numbers, args.github_api_url)
     elif args.command == 'publish':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
