@@ -58,7 +58,7 @@ def publish(artifact_dir, release_name, release_body, github_api_url, travis_url
         prerelease=True,
         target_commitish=travis_commit)
     logging.info('Release created.')
-    github_helper.upload_artifacts(args.artifact_dir, release)
+    github_helper.upload_artifacts(artifact_dir, release)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
