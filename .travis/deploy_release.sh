@@ -12,19 +12,19 @@ if [ ! -z "$TRAVIS_PULL_REQUEST" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; the
   exit 0
 fi
 
-cd .travis/tools/ci_release_publisher
-pip install -r requirements.txt
+cd .travis/tools
+pip install -r ci_release_publisher/requirements.txt
 ARTIFACTS_DIR="$(mktemp -d)"
-python ./ci_release_publisher.py --help
-python ./ci_release_publisher.py collect --help
-python ./ci_release_publisher.py cleanup --help
-python ./ci_release_publisher.py publish --help
-python ./ci_release_publisher.py collect "$ARTIFACTS_DIR"
-python ./ci_release_publisher.py cleanup
-python ./ci_release_publisher.py publish --latest-release \
-                                         --latest-release-prerelease \
-                                         --numbered-release \
-                                         --numbered-release-keep-count 3 \
-                                         --numbered-release-prerelease \
-                                         --tag-release \
-                                         "$ARTIFACTS_DIR"
+python -m ci_release_publisher --help
+python -m ci_release_publisher collect --help
+python -m ci_release_publisher cleanup --help
+python -m ci_release_publisher publish --help
+python -m ci_release_publisher collect "$ARTIFACTS_DIR"
+python -m ci_release_publisher cleanup
+python -m ci_release_publisher publish --latest-release \
+                                       --latest-release-prerelease \
+                                       --numbered-release \
+                                       --numbered-release-keep-count 3 \
+                                       --numbered-release-prerelease \
+                                       --tag-release \
+                                       "$ARTIFACTS_DIR"

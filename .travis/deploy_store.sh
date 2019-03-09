@@ -19,6 +19,7 @@ fi
 
 ARTIFACTS_DIR="$(readlink -f -- $1)"
 
-cd .travis/tools/ci_release_publisher
-pip install -r requirements.txt
-python ./ci_release_publisher.py store "$ARTIFACTS_DIR"
+cd .travis/tools
+pip install -r ci_release_publisher/requirements.txt
+python -m ci_release_publisher store --help
+python -m ci_release_publisher store "$ARTIFACTS_DIR"

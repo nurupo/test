@@ -1,7 +1,2 @@
-certifi==2018.4.16
-chardet==3.0.4
-idna==2.7
--e git+https://github.com/PyGithub/PyGithub.git@790f7daeb8f4bee19a5758c102d808bab978f4d9#egg=pygithub-master
-PyJWT==1.6.4
-requests==2.19.1
-urllib3==1.23
+PyGithub>=1.42
+requests>=2.19.1

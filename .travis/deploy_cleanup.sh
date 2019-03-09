@@ -7,6 +7,6 @@ if [ ! -z "$TRAVIS_PULL_REQUEST" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; the
   exit 0
 fi
 
-cd .travis/tools/ci_release_publisher
-pip install -r requirements.txt
-python ./ci_release_publisher.py cleanup
+cd .travis/tools
+pip install -r ci_release_publisher/requirements.txt
+python -m ci_release_publisher cleanup
