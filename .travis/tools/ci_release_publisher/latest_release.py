@@ -86,7 +86,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
     logging.info('* Starting the procedure of creating a latest release with tag name "{}".'.format(tag_name))
 
     def _is_latest_build_for_branch():
-        if int(Travis.github_auth(github_token, travis_api_url).branch_last_build_number(travis_repo_slug, travis_branch)) == int(travis_build_number):
+        if int(travis.Travis.github_auth(github_token, travis_api_url).branch_last_build_number(travis_repo_slug, travis_branch)) == int(travis_build_number):
             return True
         logging.info('Not creating the "{}" release because there is a newer build for "{}" branch running on Travis-CI.'.format(tag_name, travis_branch))
         return False

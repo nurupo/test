@@ -10,6 +10,7 @@ from . import config
 from . import env
 from . import exception
 from . import latest_release, numbered_release, tag_release, temporary_draft_release
+from . import travis
 from .__version__ import __description__
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%H:%M:%S')
@@ -86,9 +87,9 @@ try:
     elif args.command == 'cleanup':
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
         if env.optional('TRAVIS_TAG'):
-            branch_unfinished_build_numbers = Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_TAG'))
+            branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_TAG'))
         else:
-            branch_unfinished_build_numbers = Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_BRANCH'))
+            branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_BRANCH'))
         temporary_draft_release.cleanup(releases, branch_unfinished_build_numbers, github_api_url)
         for r in release_kinds:
             r.cleanup(releases, branch_unfinished_build_numbers, github_api_url)
