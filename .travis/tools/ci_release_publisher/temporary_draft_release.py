@@ -32,7 +32,7 @@ def publish_validate_args(args):
 def publish_with_args(args, artifact_dir, github_api_url, travis_api_url, travis_url):
     publish(artifact_dir, args.release_name, args.release_body, github_api_url, travis_url)
 
-def publish(artifact_dir, release_name, release_body, github_api_url, travis_api_url, travis_url):
+def publish(artifact_dir, release_name, release_body, github_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
