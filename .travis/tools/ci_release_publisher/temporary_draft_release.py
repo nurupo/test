@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import github
+import logging
 import re
 
 from . import config

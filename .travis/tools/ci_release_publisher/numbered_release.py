@@ -2,6 +2,7 @@
 
 import datetime
 import github
+import logging
 import re
 
 from . import config

@@ -2,6 +2,7 @@
 
 import cgi
 import github
+import logging
 import os
 import requests
 import shutil
