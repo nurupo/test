@@ -24,12 +24,12 @@ def _break_tag_name(tag_name):
     return {'matched': True, 'branch': m.group('branch'), 'build_number': m.group('build_number')}
 
 def _tag_name_tmp(travis_branch, travis_build_number):
-    return '{}{}'.format(config.tmp_tag_pprefix, _tag_name(travis_branch, travis_build_number))
+    return '{}{}'.format(config.tmp_tag_prefix, _tag_name(travis_branch, travis_build_number))
 
 def _break_tag_name_tmp(tag_name_tmp):
-    if not tag_name_tmp.startswith(config.tmp_tag_pprefix):
+    if not tag_name_tmp.startswith(config.tmp_tag_prefix):
         return {'matched': False}
-    tag_name = tag_name_tmp[len(config.tmp_tag_pprefix):]
+    tag_name = tag_name_tmp[len(config.tmp_tag_prefix):]
     return _break_tag_name(tag_name)
 
 def _retention_policy(releases, numbered_release_keep_count, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch, travis_build_number):
