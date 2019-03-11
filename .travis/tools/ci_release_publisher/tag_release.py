@@ -48,7 +48,7 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
     if not args.tag_release:
         return
     publish(releases, artifact_dir, args.tag_release_name, args.tag_release_body, args.tag_release_draft, args.tag_release_prerelease,
-            github_api_url, travis_url)
+            github_api_url, travis_api_url, travis_url)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
@@ -69,7 +69,7 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))
 
-def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_release_draft, tag_release_prerelease, github_api_url, travis_url):
+def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_release_draft, tag_release_prerelease, github_api_url, travis_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_commit       = env.required('TRAVIS_COMMIT')
