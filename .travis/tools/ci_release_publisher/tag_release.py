@@ -22,9 +22,9 @@ def _tag_name_tmp(travis_tag):
 
 def _break_tag_name_tmp(tag_name_tmp):
     prefix = '{}{}'.format(config.tmp_tag_prefix, config.tag_prefix)
-    if not tag_name.startswith(prefix) or not tag_name.endswith(_tmp_tag_suffix):
+    if not tag_name_tmp.startswith(prefix) or not tag_name_tmp.endswith(_tmp_tag_suffix):
         return {'matched': False}
-    tag_name = tag_name[len(prefix):-len(_tmp_tag_suffix)]
+    tag_name = tag_name_tmp[len(prefix):-len(_tmp_tag_suffix)]
     if not tag_name.startswith('-') or not tag_name.endswith('-'):
         return {'matched': False}
     tag_name = tag_name[1:-1]

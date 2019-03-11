@@ -57,7 +57,7 @@ def _retention_policy_by_count(previous_numbered_releases, numbered_release_keep
     extra_numbered_releases_to_remove = (len(previous_numbered_releases) + 1) - numbered_release_keep_count
     if extra_numbered_releases_to_remove < 0:
         extra_numbered_releases_to_remove = 0
-    logging.info('Found {} numbered release(s) for "{}" branch. Accounting for the one we are about to create, {} of existing numbered releases must be deleted.'.format(
+    logging.info('Found {} previous numbered release(s) for "{}" branch. Accounting for the one we are about to create, {} of existing numbered releases must be deleted.'.format(
         len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
     for release in previous_numbered_releases[:extra_numbered_releases_to_remove]:
         try:
@@ -167,7 +167,7 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
     github_helper.upload_artifacts(artifact_dir, release)
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
-        logging.info('This job appers to have been restarted as "{}" release already exists. Deleting the existing release.'.format(tag_name))
+        logging.info('This job appers to have been restarted as "{}" release already exists.'.format(tag_name))
         github_helper.delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if numbered_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=numbered_release_draft, prerelease=numbered_release_prerelease, tag_name=tag_name)
