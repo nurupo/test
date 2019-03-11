@@ -88,7 +88,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
     def _is_latest_build_for_branch():
         if int(travis.Travis.github_auth(github_token, travis_api_url).branch_last_build_number(travis_repo_slug, travis_branch)) == int(travis_build_number):
             return True
-        logging.info('Not creating the "{}" release because there is a newer build for "{}" branch running on Travis-CI.'.format(tag_name, travis_branch))
+        logging.info('Not creating the "{}" release because this is not the latest build for "{}" branch.'.format(tag_name, travis_branch))
         return False
 
     if not _is_latest_build_for_branch():
