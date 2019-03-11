@@ -2,7 +2,7 @@ sudo: required
 dist: trusty
 language: python
 python:
-  - 3.6
+  - 3.8-dev
 
 services:
   - docker
@@ -58,4 +58,3 @@ branches:
 notifications:
   email: false
 
-#
