@@ -77,9 +77,11 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     travis_branch = travis_branch if not travis_tag else travis_tag
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
     releases_stored_previous = [r for r in releases if r.draft and _break_tag_name(r.tag_name)['matched'] and _break_tag_name(r.tag_name)['branch'] == travis_branch and
-                               ( (int(_break_tag_name(r.tag_name)['build_number']) == int(travis_build_number)) or ( (int(_break_tag_name(r.tag_name)['build_number']) < int(travis_build_number)) and (int(_break_tag_name(r.tag_name)['build_number']) not in branch_unfinished_build_numbers) ) )]
+                               ( (int(_break_tag_name(r.tag_name)['build_number']) == int(travis_build_number)) or ( (int(_break_tag_name(r.tag_name)['build_number']) < int(travis_build_number)) and (_break_tag_name(r.tag_name)['build_number'] not in branch_unfinished_build_numbers) ) )]
     releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(_break_tag_name(r.tag_name)['job_number']))
     releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(_break_tag_name(r.tag_name)['build_number']))
+    print(r)
+    print(releases_stored_previous)
     for release in releases_stored_previous:
         try:
             github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)

@@ -130,7 +130,7 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     logging.info('* Deleting draft releases left over by previous numbered releases due to their builds failing or being cancelled.')
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
     previous_numbered_releases_tmp = [r for r in releases if r.draft and _break_tag_name_tmp(r.tag_name)['matched'] and _break_tag_name_tmp(r.tag_name)['branch'] == travis_branch and
-                                      ( (int(_break_tag_name_tmp(r.tag_name)['build_number']) == int(travis_build_number)) or ( (int(_break_tag_name_tmp(r.tag_name)['build_number']) < int(travis_build_number)) and (int(_break_tag_name_tmp(r.tag_name)['build_number']) not in branch_unfinished_build_numbers) ) )]
+                                      ( (int(_break_tag_name_tmp(r.tag_name)['build_number']) == int(travis_build_number)) or ( (int(_break_tag_name_tmp(r.tag_name)['build_number']) < int(travis_build_number)) and (_break_tag_name_tmp(r.tag_name)['build_number'] not in branch_unfinished_build_numbers) ) )]
     previous_numbered_releases_tmp = sorted(previous_numbered_releases_tmp, key=lambda r: int(_break_tag_name_tmp(r.tag_name)['build_number']))
     for r in previous_numbered_releases_tmp:
         try:
