@@ -16,6 +16,7 @@ matrix:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
         - .travis/deploy_store.sh ./deploy
       after_failure:
+        - .travis/deploy_cleanup_store.sh
         - .travis/deploy_cleanup.sh
     - stage: "Build"
       env: JOB="Linux AppImage i386"
@@ -23,6 +24,7 @@ matrix:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh i386
         - .travis/deploy_store.sh ./deploy
       after_failure:
+        - .travis/deploy_cleanup_store.sh
         - .travis/deploy_cleanup.sh
     - stage: "Build"
       env: JOB="Linux AppImage armel"
@@ -30,6 +32,7 @@ matrix:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armel
         - .travis/deploy_store.sh ./deploy
       after_failure:
+        - .travis/deploy_cleanup_store.sh
         - .travis/deploy_cleanup.sh
     - stage: "Build"
       env: JOB="Linux AppImage armhf"
@@ -37,6 +40,7 @@ matrix:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh armhf
         - .travis/deploy_store.sh ./deploy
       after_failure:
+        - .travis/deploy_cleanup_store.sh
         - .travis/deploy_cleanup.sh
     - stage: "Build"
       env: JOB="Linux AppImage arm64"
@@ -44,6 +48,7 @@ matrix:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
         - .travis/deploy_store.sh ./deploy
       after_failure:
+        - .travis/deploy_cleanup_store.sh
         - .travis/deploy_cleanup.sh
     - stage: "Deploy"
       if: type != pull_request
