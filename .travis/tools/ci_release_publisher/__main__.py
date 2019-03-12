@@ -111,7 +111,7 @@ try:
         for r in release_kinds:
             r.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
     else:
-        raise exception.CIReleasePublisherError('Specify one of "store", "collect", "cleanup" or "publish" commands.')
+        raise exception.CIReleasePublisherError('Specify one of "store", "cleanup_store", "collect", "cleanup" or "publish" commands.')
 except exception.CIReleasePublisherError as e:
     logging.error('Error: {}'.format(str(e)))
     sys.exit(1)
