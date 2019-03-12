@@ -39,6 +39,9 @@ parser_store = subparsers.add_parser('store', help='Store job artifacts in a dra
 parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory containing artifacts that need to be stored.')
 temporary_draft_release.args(parser_store)
 
+# cleanup store subparser
+parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the draft release created by "store" for this particular job.')
+
 # collect subparser
 parser_collect = subparsers.add_parser('collect', help='Collect the previously stored build artifacts in a directory.')
 parser_collect.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory where artifacts should be collected to.')
@@ -78,7 +81,11 @@ try:
         if len(os.listdir(args.artifact_dir)) <= 0:
             raise exception.CIReleasePublisherError('No artifacts were found in "{}" directory.'.format(args.artifact_dir))
         temporary_draft_release.publish_validate_args(args)
-        temporary_draft_release.publish_with_args(args, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
+        releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
+        temporary_draft_release.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
+    elif args.command == 'cleanup_store':
+        releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
+        temporary_draft_release.cleanup_store(releases, args.github_api_url)
     elif args.command == 'collect':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))

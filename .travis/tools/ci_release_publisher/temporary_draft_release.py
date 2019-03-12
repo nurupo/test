@@ -30,10 +30,10 @@ def args(parser):
 def publish_validate_args(args):
     return True
 
-def publish_with_args(args, artifact_dir, github_api_url, travis_api_url, travis_url):
-    publish(artifact_dir, args.release_name, args.release_body, github_api_url, travis_url)
+def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_url, travis_url):
+    publish(releases, artifact_dir, args.release_name, args.release_body, github_api_url, travis_url)
 
-def publish(artifact_dir, release_name, release_body, github_api_url, travis_url):
+def publish(releases, artifact_dir, release_name, release_body, github_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
@@ -41,6 +41,8 @@ def publish(artifact_dir, release_name, release_body, github_api_url, travis_url
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
     travis_job_number   = env.required('TRAVIS_JOB_NUMBER').split('.')[1]
     travis_job_id       = env.required('TRAVIS_JOB_ID')
+
+    cleanup_store(releases, github_api_url)
 
     tag_name = _tag_name(travis_branch, travis_build_number, travis_job_number)
     logging.info('* Creating a draft release with tag name "{}".'.format(tag_name))
@@ -60,6 +62,22 @@ def publish(artifact_dir, release_name, release_body, github_api_url, travis_url
     logging.info('Release created.')
     github_helper.upload_artifacts(artifact_dir, release)
 
+def cleanup_store(releases, github_api_url):
+    github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
+    travis_branch       = env.required('TRAVIS_BRANCH')
+    travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
+    travis_job_number   = env.required('TRAVIS_JOB_NUMBER').split('.')[1]
+
+    tag_name = _tag_name(travis_branch, travis_build_number, travis_job_number)
+    logging.info('* Deleting existing temporary draft releases with tag name "{}".'.format(tag_name))
+    releases_stored_previous = [r for r in releases if r.draft and r.tag_name == tag_name]
+    for release in releases_stored_previous:
+        try:
+            github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+        except Exception as e:
+            logging.exception('Error: {}'.format(str(e)))
+
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
@@ -71,8 +89,8 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     # When a tag is pushed, we create ci-<tag>-<build_number>-<job_number> releases
     # When no tag is pushed, we create ci-<branch_name>-<build_number>-<job_number> releases
     # FIXME(nurupo): what does that mean? ^
-    print(travis_branch)
     print(travis_tag)
+    print(travis_branch)
     print(branch_unfinished_build_numbers)
     travis_branch = travis_branch if not travis_tag else travis_tag
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
@@ -80,8 +98,6 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
                                ( (int(_break_tag_name(r.tag_name)['build_number']) == int(travis_build_number)) or ( (int(_break_tag_name(r.tag_name)['build_number']) < int(travis_build_number)) and (_break_tag_name(r.tag_name)['build_number'] not in branch_unfinished_build_numbers) ) )]
     releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(_break_tag_name(r.tag_name)['job_number']))
     releases_stored_previous = sorted(releases_stored_previous, key=lambda r: int(_break_tag_name(r.tag_name)['build_number']))
-    print(releases)
-    print(releases_stored_previous)
     for release in releases_stored_previous:
         try:
             github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
