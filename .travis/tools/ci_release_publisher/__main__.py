@@ -9,7 +9,8 @@ import sys
 from . import config
 from . import env
 from . import exception
-from . import latest_release, numbered_release, tag_release, temporary_draft_release
+from . import latest_release, numbered_release, tag_release
+from . import temporary_draft_release
 from . import travis
 from .__version__ import __description__
 
@@ -40,7 +41,7 @@ parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to 
 temporary_draft_release.args(parser_store)
 
 # cleanup store subparser
-parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the draft release created by "store" for this particular job.')
+parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the draft release created by the "store" for this particular job.')
 
 # collect subparser
 parser_collect = subparsers.add_parser('collect', help='Collect the previously stored build artifacts in a directory.')
@@ -48,8 +49,8 @@ parser_collect.add_argument('artifact_dir', metavar='artifact-dir', help='Path t
 
 # cleanup subparser
 parser_collect = subparsers.add_parser('cleanup',
-                                        help='Delete all draft releases created by this script during the "store" phase of this and previous (finished) builds. '
-                                             'Only the releases for the current branch are considered.')
+                                        help='Delete draft releases created by the "store" command of this build only, '
+                                             'as well as leftover draft releases created by previous builds\' "publish" command for this branch only.')
 
 # publish subparser
 parser_publish = subparsers.add_parser('publish', help='Publish a release with all artifacts from a directory.')
