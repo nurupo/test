@@ -6,6 +6,7 @@ import re
 
 from . import config
 from . import env
+from . import exception
 from . import github as github_helper
 from . import travis
 
@@ -34,12 +35,19 @@ def publish_args(parser):
     parser.add_argument('--tag-release', dest='tag_release', action='store_true',
                         help='Publish a release for a pushed tag. A separate "<tag>" release will be made whenever a tag is pushed.')
     parser.set_defaults(tag_release=False)
-    parser.add_argument('--tag-release-name', type=str, help='Release name text.  If not specified a predefined text is used.')
-    parser.add_argument('--tag-release-body', type=str, help='Release body text.  If not specified a predefined text is used.')
+    parser.add_argument('--tag-release-name', type=str, help='Release name text. If not specified a predefined text is used.')
+    parser.add_argument('--tag-release-body', type=str, help='Release body text. If not specified a predefined text is used.')
     parser.add_argument('--tag-release-draft', dest='tag_release_draft', action='store_true', help='Publish as a draft.')
     parser.set_defaults(tag_release_draft=False)
     parser.add_argument('--tag-release-prerelease', dest='tag_release_prerelease', action='store_true', help='Publish as a prerelease.')
     parser.set_defaults(tag_release_prerelease=False)
+    parser.add_argument('--tag-release-force-recreate', dest='tag_release_force_recreate', action='store_true',
+                        help='Force recreation of the release if it already exists. DANGER. You almost never want to enable this option. '
+                             'When enabled, your existing tag release will be deleted, all of its text and artifacts will be forever lost, '
+                             'and a new tag release will be created based on this build. '
+                             'Note that by enabling this, someone might accidentally (or not) restart a tag release build on Travis-CI, '
+                             'causing the release to be recreated. You have been warned.')
+    parser.set_defaults(tag_release=False)
 
 def publish_validate_args(args):
     return args.tag_release
@@ -48,7 +56,7 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
     if not args.tag_release:
         return
     publish(releases, artifact_dir, args.tag_release_name, args.tag_release_body, args.tag_release_draft, args.tag_release_prerelease,
-            github_api_url, travis_api_url, travis_url)
+            args.tag_release_force_recreate, github_api_url, travis_api_url, travis_url)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
@@ -69,7 +77,7 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))
 
-def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_release_draft, tag_release_prerelease, github_api_url, travis_api_url, travis_url):
+def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_release_draft, tag_release_prerelease, tag_release_force_recreate, github_api_url, travis_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_commit       = env.required('TRAVIS_COMMIT')
@@ -107,8 +115,12 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
         return
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
-        # Delete release but keep the tag, since in Tag Releases the user specifies the tag and it was just pushed
-        logging.info('Deleting release with tag name "{}".'.format(tag_name))
-        previous_release[0].delete_release()
+        if tag_release_force_recreate:
+            # Delete release but keep the tag, since in Tag Releases the user creates the tag, not us
+            logging.info('Deleting release with tag name "{}".'.format(tag_name))
+            previous_release[0].delete_release()
+        else:
+            raise exception.CIReleasePublisherError('Tag release with tag name "{}" already exists. Are you sure you meant to recreate the tag release? '
+                                                    'Please mannualy delete the "{}" release and restart the build if you really mean to have the existing tag release be re-created.'.format(tag_name, tag_name))
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if tag_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=tag_release_draft, prerelease=tag_release_prerelease, tag_name=tag_name)
