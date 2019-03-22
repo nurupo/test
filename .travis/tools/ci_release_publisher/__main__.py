@@ -27,7 +27,7 @@ parser_travis.add_argument('--travis-public', dest='travis_type', action='store_
 parser_travis.add_argument('--travis-private', dest='travis_type', action='store_const', const='private',
                             help='Use API of the paid Travis-CI service for GitHub private repositories, i.e. "https://travis-ci.com".')
 parser_travis.add_argument('--travis-enterprise', dest='travis_type', metavar='TRAVIS_URL', type=str,
-                            help='Use API of Travis-CI running under a personal domain. Specify the actual URL, e.g. "http://travis.example.com".')
+                            help='Use API of Travis-CI running under a personal domain. Specify the Travis-CI instance URL, not the API endpoint URL, e.g. "https://travis.example.com".')
 parser.set_defaults(travis_type='public')
 
 parser.add_argument('--github-api-url', type=str, default="",
@@ -36,15 +36,15 @@ parser.add_argument('--github-api-url', type=str, default="",
 subparsers = parser.add_subparsers(dest='command')
 
 # store subparser
-parser_store = subparsers.add_parser('store', help='Store job artifacts in a draft release for the later collection.')
+parser_store = subparsers.add_parser('store', help='Store artifacts of this job in a draft release for the later collection in the "publish" command job.')
 parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory containing artifacts that need to be stored.')
 temporary_draft_release.args(parser_store)
 
 # cleanup store subparser
-parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the draft release created by the "store" for this particular job.')
+parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the draft release created by the "store" command of the current job. Basically undoes the "store" command for a job.')
 
 # collect subparser
-parser_collect = subparsers.add_parser('collect', help='Collect the previously stored build artifacts in a directory.')
+parser_collect = subparsers.add_parser('collect', help='Collect artifacts from all draft releases created by the "store" command during this build in a directory.')
 parser_collect.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory where artifacts should be collected to.')
 
 # cleanup subparser

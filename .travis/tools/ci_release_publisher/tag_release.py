@@ -120,7 +120,10 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
             logging.info('Deleting release with tag name "{}".'.format(tag_name))
             previous_release[0].delete_release()
         else:
+            github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
             raise exception.CIReleasePublisherError('Tag release with tag name "{}" already exists. Are you sure you meant to recreate the tag release? '
-                                                    'Please mannualy delete the "{}" release and restart the build if you really mean to have the existing tag release be re-created.'.format(tag_name, tag_name))
+                                                    'Recreating a publicly visible tag releases might be disastrous, as all the changes you have done to the release - changed text, '
+                                                    'extra artifacts and so on - will be lost, as well as hashes of the files created as part of the build might change. '
+                                                    'Please manually delete the "{}" release and restart the build if you really meant to recreate the release.'.format(tag_name, tag_name))
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if tag_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=tag_release_draft, prerelease=tag_release_prerelease, tag_name=tag_name)
