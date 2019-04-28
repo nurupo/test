@@ -37,8 +37,8 @@ def _retention_policy(releases, numbered_release_keep_count, numbered_release_ke
     # We want to enforce the retention policy only on the build numbers lower than ours. As to why,
     # imagine the case where build #10 for branch 'foo' has a rule to keep only last 3 numbered
     # builds. However, 'foo' is already at build #1000 and it has changed its retention policy
-    # greatly since the 10th build, it now retaint 50 last numbered releases. If someone were to
-    # restart build #10 in Travis-CI, either by an accident or not, it would be disasterous if it
+    # greatly since the 10th build, it now retains 50 last numbered releases. If someone were to
+    # restart build #10 on Travis-CI, either by an accident or not, it would be disasterous if it
     # deleted the 50 numbered releases and kept just 3. That's why.
     # (To clarify a possible confusion, if you restart build #10 it remains being build #10, it
     # doesn't change its build number to, say, #1001.)
