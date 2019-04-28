@@ -83,16 +83,8 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
-    travis_tag          = env.optional('TRAVIS_TAG')
 
     logging.info('* Deleting temporary draft releases created to store per-job artifacts.')
-    # When a tag is pushed, we create ci-<tag>-<build_number>-<job_number> releases
-    # When no tag is pushed, we create ci-<branch_name>-<build_number>-<job_number> releases
-    # FIXME(nurupo): what does that mean? ^
-    print(travis_tag)
-    print(travis_branch)
-    print(branch_unfinished_build_numbers)
-    travis_branch = travis_branch if not travis_tag else travis_tag
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
     releases_stored_previous = [r for r in releases if r.draft and _break_tag_name(r.tag_name)['matched'] and _break_tag_name(r.tag_name)['branch'] == travis_branch and
                                ( (int(_break_tag_name(r.tag_name)['build_number']) == int(travis_build_number)) or ( (int(_break_tag_name(r.tag_name)['build_number']) < int(travis_build_number)) and (_break_tag_name(r.tag_name)['build_number'] not in branch_unfinished_build_numbers) ) )]
