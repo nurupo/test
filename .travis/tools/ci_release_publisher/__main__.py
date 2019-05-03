@@ -33,6 +33,9 @@ parser.set_defaults(travis_type='public')
 parser.add_argument('--github-api-url', type=str, default="",
                     help='Use custom GitHib API URL, e.g. for self-hosted GitHub Enterprise instance. This should be an URL to the API endpoint, e.g. "https://api.github.com".')
 
+parser.add_argument('--tag-prefix', type=str, default=config.tag_prefix, help='git tag prefix to use.')
+parser.add_argument('--tag-prefix-tmp', type=str, default=config.tag_prefix_tmp, help='git tag prefix to use for temporary in-progress releases.')
+
 subparsers = parser.add_subparsers(dest='command')
 
 # store subparser
@@ -76,6 +79,13 @@ if not args.github_api_url:
     args.github_api_url = "https://api.github.com"
 
 try:
+    if not args.tag_prefix:
+        raise exception.CIReleasePublisherError('--tag-prefix can\'t be empty.')
+    if not args.tmp_tag_prefix:
+        raise exception.CIReleasePublisherError('--tag-prefix-tmp can\'t be empty.')
+    config.tag_prefix = args.tag_prefix
+    config.tag_prefix_tmp = args.tag_prefix_tmp
+
     if args.command == 'store':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))

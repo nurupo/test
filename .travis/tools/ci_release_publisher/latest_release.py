@@ -24,12 +24,12 @@ def _break_tag_name(tag_name):
     return {'matched': True, 'branch': m.group('branch')}
 
 def _tag_name_tmp(travis_branch):
-    return '{}{}'.format(config.tmp_tag_prefix, _tag_name(travis_branch))
+    return '{}{}'.format(config.tag_prefix_tmp, _tag_name(travis_branch))
 
 def _break_tag_name_tmp(tag_name_tmp):
-    if not tag_name_tmp.startswith(config.tmp_tag_prefix):
+    if not tag_name_tmp.startswith(config.tag_prefix_tmp):
         return {'matched': False}
-    tag_name = tag_name_tmp[len(config.tmp_tag_prefix):]
+    tag_name = tag_name_tmp[len(config.tag_prefix_tmp):]
     return _break_tag_name(tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
