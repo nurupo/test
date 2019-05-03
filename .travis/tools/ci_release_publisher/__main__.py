@@ -81,7 +81,7 @@ if not args.github_api_url:
 try:
     if not args.tag_prefix:
         raise exception.CIReleasePublisherError('--tag-prefix can\'t be empty.')
-    if not args.tmp_tag_prefix:
+    if not args.tag_prefix_tmp:
         raise exception.CIReleasePublisherError('--tag-prefix-tmp can\'t be empty.')
     config.tag_prefix = args.tag_prefix
     config.tag_prefix_tmp = args.tag_prefix_tmp
