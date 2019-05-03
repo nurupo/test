@@ -15,6 +15,7 @@ matrix:
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
         - .travis/deploy_store.sh ./deploy
+        - /bin/false
       after_failure:
         - .travis/deploy_cleanup_store.sh
         - .travis/deploy_cleanup.sh
