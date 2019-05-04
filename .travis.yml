@@ -14,9 +14,10 @@ matrix:
       env: JOB="Linux AppImage amd64"
       script:
         - /bin/false
-        - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
-        - .travis/deploy_store.sh ./deploy
+#        - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh amd64
+#        - .travis/deploy_store.sh ./deploy
       after_failure:
+        - sleep 60
         - .travis/deploy_cleanup_store.sh
         - .travis/deploy_cleanup.sh
     - stage: "Build"
