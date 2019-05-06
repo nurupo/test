@@ -10,7 +10,5 @@ fi
 cd .travis/tools
 pip install -r ci_release_publisher/requirements.txt
 python -m ci_release_publisher cleanup_publish
-python -m ci_release_publisher cleanup_store --scope current-job \
-                                             --scope previous-finished-builds \
-                                             --release complete \
-                                             --release incomplete
+python -m ci_release_publisher cleanup_store --scope current-job previous-finished-builds \
+                                             --release complete incomplete
