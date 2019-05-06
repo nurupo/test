@@ -128,7 +128,7 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
             print('2 | {} == {}'.format(info['build_number'], travis_build_number))
             result = int(info['build_number']) == int(travis_build_number)
         if not result and CleanupStoreScope.PREVIOUS_FINISHED_BUILDS in scopes:
-            print('3 | {} < {}'.format(info['build_number']), travis_build_number)
+            print('3 | {} < {}'.format(info['build_number'], travis_build_number)
             print(branch_unfinished_build_numbers)
             result = int(info['build_number']) < int(travis_build_number) and info['build_number'] not in branch_unfinished_build_numbers
         return result
