@@ -118,13 +118,11 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
 
         result = False
         if not result and CleanupStoreScope.CURRENT_JOB in scopes:
-            result = int(info['build_number']) == int(travis_build_number) and
-                     int(info['job_number']) == int(travis_job_number)
+            result = int(info['build_number']) == int(travis_build_number) and int(info['job_number']) == int(travis_job_number)
         if not result and CleanupStoreScope.CURRENT_BUILD in scopes:
             result = int(info['build_number']) == int(travis_build_number)
         if not result and CleanupStoreScope.PREVIOUS_FINISHED_BUILDS in scopes:
-            result = int(info['build_number']) < int(travis_build_number) and
-                     info['build_number'] not in branch_unfinished_build_numbers
+            result = int(info['build_number']) < int(travis_build_number) and info['build_number'] not in branch_unfinished_build_numbers
         return result
 
     releases_to_delete = [r for r in releases if should_delete(r)]
