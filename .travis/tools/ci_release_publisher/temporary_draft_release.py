@@ -97,6 +97,9 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
     if CleanupStoreScope.PREVIOUS_FINISHED_BUILDS in scopes:
         branch_unfinished_build_numbers = travis.Travis.github_auth(github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
 
+    print('scopes: {}'.format(scopes))
+    print('release_kinds: {}'.format(release_kinds))
+
     def should_delete(r):
         if not r.draft:
             return False
@@ -122,10 +125,10 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
             print('1 | {} == {} and {} == {}'.format(info['build_number'], travis_build_number, info['job_number'], travis_job_number))
             result = int(info['build_number']) == int(travis_build_number) and int(info['job_number']) == int(travis_job_number)
         if not result and CleanupStoreScope.CURRENT_BUILD in scopes:
-            print('2 | {} == {} and {} == {}'.format(info['build_number'], travis_build_number))
+            print('2 | {} == {}'.format(info['build_number'], travis_build_number))
             result = int(info['build_number']) == int(travis_build_number)
         if not result and CleanupStoreScope.PREVIOUS_FINISHED_BUILDS in scopes:
-            print('3 | {} == {} and {} == {}'.format(info['build_number']))
+            print('3 | {} < {}'.format(info['build_number']), travis_build_number)
             print(branch_unfinished_build_numbers)
             result = int(info['build_number']) < int(travis_build_number) and info['build_number'] not in branch_unfinished_build_numbers
         return result
