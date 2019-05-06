@@ -83,4 +83,5 @@ class Travis:
             'include': 'job.allow_failure,job.state',
         }
         response = requests.get('{}/build/{}'.format(self._api_url, build_number), headers=self._headers, params=params)
+        print(response)
         return any([j for j in response.json()['jobs'] if j['state'] == 'failed' and not j['allow_failure']])
