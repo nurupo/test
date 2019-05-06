@@ -13,6 +13,8 @@ from . import latest_release, numbered_release, tag_release
 from . import temporary_draft_release
 from . import travis
 from .__version__ import __description__
+from .cleanup_store_scope import CleanupStoreScope
+from .cleanup_store_release import CleanupStoreRelease
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%H:%M:%S')
 
@@ -44,20 +46,28 @@ parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to 
 temporary_draft_release.args(parser_store)
 
 # cleanup store subparser
-parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the draft release created by the "store" command of the current job. Basically undoes the "store" command for a job.')
+
+def _enum_to_choices(enum_calss):
+    return [e.name.lower().replace('_', '-') for e in enum_calss]
+
+def _choices_to_enum(enum_calss, choices):
+    return [enum_calss[s.upper().replace('-', '_')] for s in choices]
+
+parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the releases created by the "store" command.')
+parser_cleanup_store.add_argument('--scope', nargs='+', type=str, choices=_enum_to_choices(CleanupStoreScope), required=True, help="Scope to cleanup.")
+parser_cleanup_store.add_argument('--release', nargs='+', type=str, choices=_enum_to_choices(CleanupStoreRelease), required=True, help="Release to cleanup.")
+parser_cleanup_store.add_argument('--on-nonallowed-failure', default=False, action='store_true', help='Cleanup only if the current build has a job that both has failed and doesn\'t have allow_failure set on it, i.e. the current build is going to fail once the current stage finishes running.')
 
 # collect subparser
 parser_collect = subparsers.add_parser('collect', help='Collect artifacts from all draft releases created by the "store" command during this build in a directory.')
 parser_collect.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory where artifacts should be collected to.')
 
-# cleanup subparser
-parser_collect = subparsers.add_parser('cleanup',
-                                        help='Delete draft releases created by the "store" command of this build only, '
-                                             'as well as leftover draft releases created by previous builds\' "publish" command for this branch only.')
-
 # publish subparser
 parser_publish = subparsers.add_parser('publish', help='Publish a release with all artifacts from a directory.')
 parser_publish.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory containing build artifacts to publish.')
+
+# cleanup publish subparser
+parser_cleanup_publish = subparsers.add_parser('cleanup_publish', help='Delete incomplete releases left over by the "publish" command.')
 
 for r in release_kinds:
     r.publish_args(parser_publish)
@@ -96,21 +106,12 @@ try:
         temporary_draft_release.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
     elif args.command == 'cleanup_store':
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
-        temporary_draft_release.cleanup_store(releases, args.github_api_url)
+        temporary_draft_release.cleanup_store(releases, _choices_to_enum(CleanupStoreScope, args.scope), _choices_to_enum(CleanupStoreRelease, args.release), args.on_nonallowed_failure, args.github_api_url)
     elif args.command == 'collect':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
         temporary_draft_release.download(releases, args.artifact_dir)
-    elif args.command == 'cleanup':
-        releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
-        if env.optional('TRAVIS_TAG'):
-            branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_TAG'))
-        else:
-            branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_BRANCH'))
-        temporary_draft_release.cleanup(releases, branch_unfinished_build_numbers, args.github_api_url)
-        for r in release_kinds:
-            r.cleanup(releases, branch_unfinished_build_numbers, args.github_api_url)
     elif args.command == 'publish':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
@@ -121,6 +122,11 @@ try:
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
         for r in release_kinds:
             r.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
+    elif args.command == 'cleanup_publish':
+        releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
+        branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_BRANCH'))
+        for r in release_kinds:
+            r.cleanup(releases, branch_unfinished_build_numbers, args.github_api_url)
     else:
         raise exception.CIReleasePublisherError('Specify one of "store", "cleanup_store", "collect", "cleanup" or "publish" commands.')
 except exception.CIReleasePublisherError as e:

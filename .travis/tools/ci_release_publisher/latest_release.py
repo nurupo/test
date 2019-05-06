@@ -53,15 +53,12 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
             logging.exception('Error: {}'.format(str(e)))
 
 def publish_args(parser):
-    parser.add_argument('--latest-release', dest='latest_release', action='store_true',
+    parser.add_argument('--latest-release', default=False, action='store_true',
                         help='Publish latest release. The same "{}-<branch>-{}" tag release will be re-used (re-created) by each build.'.format(config.tag_prefix, _tag_suffix))
-    parser.set_defaults(latest_release=False)
     parser.add_argument('--latest-release-name', type=str, help='Release name text. If not specified a predefined text is used.')
     parser.add_argument('--latest-release-body', type=str, help='Release body text. If not specified a predefined text is used.')
-    parser.add_argument('--latest-release-draft', dest='latest_release_draft', action='store_true', help='Publish as a draft.')
-    parser.set_defaults(latest_release_draft=False)
-    parser.add_argument('--latest-release-prerelease', dest='latest_release_prerelease', action='store_true', help='Publish as a prerelease.')
-    parser.set_defaults(latest_release_prerelease=False)
+    parser.add_argument('--latest-release-draft', default=False, action='store_true', help='Publish as a draft.')
+    parser.add_argument('--latest-release-prerelease', default=False, action='store_true', help='Publish as a prerelease.')
 
 def publish_validate_args(args):
     return args.latest_release

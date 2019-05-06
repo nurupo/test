@@ -32,22 +32,18 @@ def _break_tag_name_tmp(tag_name_tmp):
     return _break_tag_name(tag_name)
 
 def publish_args(parser):
-    parser.add_argument('--tag-release', dest='tag_release', action='store_true',
+    parser.add_argument('--tag-release', default=False, action='store_true',
                         help='Publish a release for a pushed tag. A separate "<tag>" release will be made whenever a tag is pushed.')
-    parser.set_defaults(tag_release=False)
     parser.add_argument('--tag-release-name', type=str, help='Release name text. If not specified a predefined text is used.')
     parser.add_argument('--tag-release-body', type=str, help='Release body text. If not specified a predefined text is used.')
-    parser.add_argument('--tag-release-draft', dest='tag_release_draft', action='store_true', help='Publish as a draft.')
-    parser.set_defaults(tag_release_draft=False)
-    parser.add_argument('--tag-release-prerelease', dest='tag_release_prerelease', action='store_true', help='Publish as a prerelease.')
-    parser.set_defaults(tag_release_prerelease=False)
-    parser.add_argument('--tag-release-force-recreate', dest='tag_release_force_recreate', action='store_true',
+    parser.add_argument('--tag-release-draft', default=False, action='store_true', help='Publish as a draft.')
+    parser.add_argument('--tag-release-prerelease', default=False, action='store_true', help='Publish as a prerelease.')
+    parser.add_argument('--tag-release-force-recreate', default=False, action='store_true',
                         help='Force recreation of the release if it already exists. DANGER. You almost never want to enable this option. '
                              'When enabled, your existing tag release will be deleted, all of its text and artifacts will be forever lost, '
                              'and a new tag release will be created based on this build. '
                              'Note that by enabling this, someone might accidentally (or not) restart a tag release build on Travis-CI, '
                              'causing the release to be recreated. You have been warned.')
-    parser.set_defaults(tag_release=False)
 
 def publish_validate_args(args):
     return args.tag_release

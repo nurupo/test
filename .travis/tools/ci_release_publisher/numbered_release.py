@@ -81,11 +81,10 @@ def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_
     previous_numbered_releases = [r for r in previous_numbered_releases if r not in expired_previous_numbered_releases]
 
 def publish_args(parser):
-    parser.add_argument('--numbered-release', dest='numbered_release', action='store_true',
+    parser.add_argument('--numbered-release', default=False, action='store_true',
                         help='Publish a numbered release. A separate "{}-<branch>-<build_number>" tag release will be made for each build. '
                              'You must specify at least one of --numbered-release-keep-* arguments specifying the strategy for keeping numbered builds.'
                              .format(config.tag_prefix))
-    parser.set_defaults(numbered_release=False)
     parser.add_argument('--numbered-release-keep-count', type=int, default=0,
                         help='Number of numbered releases to keep. If set to 0, this check is disabled, otherwise if the number of numbered releases exceeds that number, '
                              'the oldest numbered release will be deleted. Note that due to a race condition of several Travis-CI builds running at the same time, '
@@ -95,10 +94,8 @@ def publish_args(parser):
                              'otherwise all numbered releases that are older than the specified amount of seconds will be deleted.')
     parser.add_argument('--numbered-release-name', type=str, help='Release name text. If not specified a predefined text is used.')
     parser.add_argument('--numbered-release-body', type=str, help='Release body text. If not specified a predefined text is used.')
-    parser.add_argument('--numbered-release-draft', dest='numbered_release_draft', action='store_true', help='Publish as a draft.')
-    parser.set_defaults(numbered_release_draft=False)
-    parser.add_argument('--numbered-release-prerelease', dest='numbered_release_prerelease', action='store_true', help='Publish as a prerelease.')
-    parser.set_defaults(numbered_release_prerelease=False)
+    parser.add_argument('--numbered-release-draft', default=False, action='store_true', help='Publish as a draft.')
+    parser.add_argument('--numbered-release-prerelease', default=False, action='store_true', help='Publish as a prerelease.')
 
 
 def publish_validate_args(args):

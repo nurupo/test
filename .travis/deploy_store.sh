@@ -13,7 +13,7 @@ if [ ! -z "$TRAVIS_PULL_REQUEST" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; the
 fi
 
 if [ "$#" != "1" ]; then
-  echo "Error: No arguments provided. Please specify a directory containign artifacts as the first argument."
+  echo "Error: No arguments provided. Please specify a directory containing artifacts as the first argument."
   exit 1
 fi
 
