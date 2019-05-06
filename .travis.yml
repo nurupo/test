@@ -68,7 +68,8 @@ matrix:
     - stage: "Deploy"
       if: type != pull_request
       script:
-        - . .travis/ci_release_publisher_collect.sh
+        - ARTIFACTS_DIR="$(mktemp -d)"
+        - .travis/ci_release_publisher_collect.sh
         - .travis/ci_release_publisher_cleanup4.sh
         - .travis/ci_release_publisher_publish.sh
       after_failure:

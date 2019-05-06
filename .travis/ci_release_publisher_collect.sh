@@ -12,9 +12,13 @@ if [ ! -z "$TRAVIS_PULL_REQUEST" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; the
   exit 0
 fi
 
+if [ -z "$ARTIFACTS_DIR"]; then
+  echo "Error: Environment varialbe ARTIFACTS_DIR is not set."
+  exit 1
+fi
+
 cd .travis/tools
 pip install -r ci_release_publisher/requirements.txt
-export ARTIFACTS_DIR="$(mktemp -d)"
 python -m ci_release_publisher --help
 python -m ci_release_publisher collect --help
 python -m ci_release_publisher collect "$ARTIFACTS_DIR"
