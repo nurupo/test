@@ -78,6 +78,7 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
     travis_repo_slug     = env.required('TRAVIS_REPO_SLUG')
     travis_branch        = env.required('TRAVIS_BRANCH')
     travis_build_number  = env.required('TRAVIS_BUILD_NUMBER')
+    travis_build_id      = env.required('TRAVIS_BUILD_ID')
     travis_job_number    = env.required('TRAVIS_JOB_NUMBER').split('.')[1]
     travis_test_result   = env.optional('TRAVIS_TEST_RESULT')
     travis_allow_failure = env.optional('TRAVIS_ALLOW_FAILURE')
@@ -87,7 +88,7 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
     if on_nonallowed_failure:
         has_nonallowed_failure = travis_test_result == '1' and travis_allow_failure == 'false'
         if not has_nonallowed_failure:
-            has_nonallowed_failure = travis.Travis.github_auth(github_token, travis_api_url).build_has_failed_nonallowfailure_job(travis_build_number)
+            has_nonallowed_failure = travis.Travis.github_auth(github_token, travis_api_url).build_has_failed_nonallowfailure_job(travis_build_id)
         if not has_nonallowed_failure:
             logging.info('Current build has no jobs that both have failed and have no allow_failure set.')
             return

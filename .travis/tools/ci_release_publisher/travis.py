@@ -76,13 +76,11 @@ class Travis:
         return build_numbers
 
     # Returns True if the build has a job that both has failed and doesn't have allow_failure set on it
-    def build_has_failed_nonallowfailure_job(self, build_number):
+    def build_has_failed_nonallowfailure_job(self, build_id):
         # API doc: https://developer.travis-ci.com/resource/build
         # API doc: https://developer.travis-ci.com/resource/jobs
         params = {
             'include': 'job.allow_failure,job.state',
         }
-        response = requests.get('{}/build/{}'.format(self._api_url, build_number), headers=self._headers, params=params)
-        print('{}/build/{}'.format(self._api_url, build_number))
-        print(response.text)
+        response = requests.get('{}/build/{}'.format(self._api_url, build_id), headers=self._headers, params=params)
         return any([j for j in response.json()['jobs'] if j['state'] == 'failed' and not j['allow_failure']])
