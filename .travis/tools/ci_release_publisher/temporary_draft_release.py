@@ -114,7 +114,7 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
         if not info:
             return False
 
-        if not info['branch'] == travis_branch:
+        if info['branch'] != travis_branch:
             return False
 
         result = False
