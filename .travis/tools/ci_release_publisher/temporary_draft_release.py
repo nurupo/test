@@ -97,13 +97,10 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
     if CleanupStoreScope.PREVIOUS_FINISHED_BUILDS in scopes:
         branch_unfinished_build_numbers = travis.Travis.github_auth(github_token, travis_api_url).branch_unfinished_build_numbers(travis_repo_slug, travis_branch)
 
-    print('scopes: {}'.format(scopes))
-    print('release_kinds: {}'.format(release_kinds))
-
     def should_delete(r):
         if not r.draft:
             return False
-        print(r.tag_name)
+
         info = None
         if not info and CleanupStoreRelease.COMPLETE in release_kinds:
             _info = _break_tag_name(r.tag_name)
@@ -113,23 +110,19 @@ def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github
             _info = _break_tag_name_tmp(r.tag_name)
             if _info['matched']:
                 info = _info
-        print(info)
+
         if not info:
             return False
-        print('0 | {}, {}'.format(info['branch'], travis_branch))
+
         if info['branch'] != travis_branch:
             return False
 
         result = False
         if not result and CleanupStoreScope.CURRENT_JOB in scopes:
-            print('1 | {} == {} and {} == {}'.format(info['build_number'], travis_build_number, info['job_number'], travis_job_number))
             result = int(info['build_number']) == int(travis_build_number) and int(info['job_number']) == int(travis_job_number)
         if not result and CleanupStoreScope.CURRENT_BUILD in scopes:
-            print('2 | {} == {}'.format(info['build_number'], travis_build_number))
             result = int(info['build_number']) == int(travis_build_number)
         if not result and CleanupStoreScope.PREVIOUS_FINISHED_BUILDS in scopes:
-            print('3 | {} < {}'.format(info['build_number'], travis_build_number))
-            print(branch_unfinished_build_numbers)
             result = int(info['build_number']) < int(travis_build_number) and info['build_number'] not in branch_unfinished_build_numbers
         return result
 

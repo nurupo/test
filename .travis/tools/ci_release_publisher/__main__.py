@@ -106,8 +106,6 @@ try:
         temporary_draft_release.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
     elif args.command == 'cleanup_store':
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
-        print('args.scope: {}'.format(args.scope))
-        print('args.release: {}'.format(args.release))
         temporary_draft_release.cleanup_store(releases, _choices_to_enum(CleanupStoreScope, args.scope), _choices_to_enum(CleanupStoreRelease, args.release), args.on_nonallowed_failure, args.github_api_url, travis_api_url)
     elif args.command == 'collect':
         if not os.path.isdir(args.artifact_dir):
