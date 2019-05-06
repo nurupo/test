@@ -73,7 +73,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
     logging.info('Changing the tag name from "{}" to "{}".'.format(tag_name_tmp, tag_name))
     release.update_release(name=release.title, message=release.body, draft=True, prerelease=True, tag_name=tag_name)
 
-def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github_api_url):
+def cleanup_store(releases, scopes, release_kinds, on_nonallowed_failure, github_api_url, travis_api_url):
     github_token         = env.required('GITHUB_ACCESS_TOKEN')
     travis_repo_slug     = env.required('TRAVIS_REPO_SLUG')
     travis_branch        = env.required('TRAVIS_BRANCH')
