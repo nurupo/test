@@ -10,7 +10,7 @@ from . import config
 from . import env
 from . import exception
 from . import latest_release, numbered_release, tag_release
-from . import temporary_draft_release
+from . import temporary_store_release
 from . import travis
 from .__version__ import __description__
 
@@ -41,11 +41,11 @@ subparsers = parser.add_subparsers(dest='command')
 # store subparser
 parser_store = subparsers.add_parser('store', help='Store artifacts of this job in a draft release for the later collection in the "publish" command job.')
 parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory containing artifacts that need to be stored.')
-temporary_draft_release.publish_args(parser_store)
+temporary_store_release.publish_args(parser_store)
 
 # cleanup store subparser
 parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the releases created by the "store" command.')
-temporary_draft_release.cleanup_args(parser_cleanup_store)
+temporary_store_release.cleanup_args(parser_cleanup_store)
 
 # collect subparser
 parser_collect = subparsers.add_parser('collect', help='Collect artifacts from all draft releases created by the "store" command during this build in a directory.')
@@ -91,15 +91,15 @@ try:
         if len(os.listdir(args.artifact_dir)) <= 0:
             raise exception.CIReleasePublisherError('No artifacts were found in "{}" directory.'.format(args.artifact_dir))
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
-        temporary_draft_release.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
+        temporary_store_release.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
     elif args.command == 'cleanup_store':
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
-        temporary_draft_release.cleanup_with_args(args, releases, args.github_api_url, travis_api_url)
+        temporary_store_release.cleanup_with_args(args, releases, args.github_api_url, travis_api_url)
     elif args.command == 'collect':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
-        temporary_draft_release.download(releases, args.artifact_dir)
+        temporary_store_release.download(releases, args.artifact_dir)
     elif args.command == 'publish':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
