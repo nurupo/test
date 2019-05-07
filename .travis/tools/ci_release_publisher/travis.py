@@ -32,7 +32,7 @@ class Travis:
         response = requests.post('{}/auth/github'.format(travis_api_url), headers=headers, params={'github_token': github_token})
         try:
             return Travis(response.json()['access_token'], travis_api_url)
-        except e:
+        except Exception as e:
             print(response)
             print(response.text)
             raise e
