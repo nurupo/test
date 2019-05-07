@@ -30,7 +30,12 @@ class Travis:
         }
         # API doc: https://docs.travis-ci.com/api/?http#with-a-github-token
         response = requests.post('{}/auth/github'.format(travis_api_url), headers=headers, params={'github_token': github_token})
-        return Travis(response.json()['access_token'], travis_api_url)
+        try:
+            return Travis(response.json()['access_token'], travis_api_url)
+        except e:
+            print(response)
+            print(response.text)
+            raise e
 
     # Returns last build number for a branch
     def branch_last_build_number(self, repo_slug, branch_name):
