@@ -26,31 +26,11 @@ def _break_tag_name(tag_name):
 def _tag_name_tmp(travis_branch):
     return '{}{}'.format(config.tag_prefix_tmp, _tag_name(travis_branch))
 
-def _break_tag_name_tmp(tag_name_tmp):
-    if not tag_name_tmp.startswith(config.tag_prefix_tmp):
+def _break_tag_name_tmp(tag_name):
+    if not tag_name.startswith(config.tag_prefix_tmp):
         return {'matched': False}
-    tag_name = tag_name_tmp[len(config.tag_prefix_tmp):]
+    tag_name = tag_name[len(config.tag_prefix_tmp):]
     return _break_tag_name(tag_name)
-
-def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
-    github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
-    travis_branch       = env.required('TRAVIS_BRANCH')
-    travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
-    travis_tag          = env.optional('TRAVIS_TAG')
-
-    if travis_tag:
-        return
-    logging.info('* Deleting draft releases left over by previous latest releases due to their builds failing or being cancelled.')
-    # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
-    previous_latest_releases_tmp = [r for r in releases if r.draft and _break_tag_name_tmp(r.tag_name)['matched'] and _break_tag_name_tmp(r.tag_name)['branch'] == travis_branch]
-    if not previous_latest_releases_tmp or any(n != travis_build_number for n in branch_unfinished_build_numbers):
-        return
-    for r in previous_latest_releases_tmp:
-        try:
-            github_helper.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
-        except Exception as e:
-            logging.exception('Error: {}'.format(str(e)))
 
 def publish_args(parser):
     parser.add_argument('--latest-release', default=False, action='store_true',
@@ -80,7 +60,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
     if travis_tag:
         return
     tag_name = _tag_name(travis_branch)
-    logging.info('* Starting the procedure of creating a latest release with tag name "{}".'.format(tag_name))
+    logging.info('* Creating a latest release with the tag name "{}".'.format(tag_name))
 
     def _is_latest_build_for_branch():
         if int(travis.Travis.github_auth(github_token, travis_api_url).branch_last_build_number(travis_repo_slug, travis_branch)) == int(travis_build_number):
@@ -91,13 +71,13 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
     if not _is_latest_build_for_branch():
         return
     tag_name_tmp = _tag_name_tmp(travis_branch)
-    logging.info('Creating a draft release with tag name "{}".'.format(tag_name_tmp))
+    logging.info('Creating a draft release with the tag name "{}".'.format(tag_name_tmp))
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=latest_release_name if latest_release_name else
              'Latest CI build of {} branch'.format(travis_branch),
         message=latest_release_body if latest_release_body else
-                'This is an auto-generated release based on [Travis-CI build #{}]({}/{}/builds/{})'
+                'This is an auto-generated release based on a [Travis-CI build #{}]({}/{}/builds/{})'
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=latest_release_prerelease,
@@ -111,3 +91,25 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
         github_helper.delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=latest_release_draft, prerelease=latest_release_prerelease, tag_name=tag_name)
+
+def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
+    github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
+    travis_branch       = env.required('TRAVIS_BRANCH')
+    travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
+    travis_tag          = env.optional('TRAVIS_TAG')
+
+    if travis_tag:
+        return
+    logging.info('* Deleting incomplete latest releases left over due to jobs failing or being cancelled.')
+    # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
+    latest_releases_incomplete = [r for r in releases if r.draft and
+                                  _break_tag_name_tmp(r.tag_name)['matched'] and
+                                  _break_tag_name_tmp(r.tag_name)['branch'] == travis_branch]
+    if not latest_releases_incomplete or any(n != travis_build_number for n in branch_unfinished_build_numbers):
+        return
+    for r in latest_releases_incomplete:
+        try:
+            github_helper.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
+        except Exception as e:
+            logging.exception('Error: {}'.format(str(e)))

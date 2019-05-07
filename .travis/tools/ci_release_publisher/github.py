@@ -60,7 +60,7 @@ def upload_artifacts(src_dir, release):
     logging.info('All artifacts for "{}" release are uploaded.'.format(release.tag_name))
 
 def delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug):
-    logging.info('Deleting {}release with tag name {}.'.format('draft ' if release.draft else '', release.tag_name))
+    logging.info('Deleting a release with the tag name "{}".'.format(release.tag_name))
     release.delete_release()
     # Published releases create tags and we don't want to keep the tags
     if not release.draft:

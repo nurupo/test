@@ -13,8 +13,6 @@ from . import latest_release, numbered_release, tag_release
 from . import temporary_draft_release
 from . import travis
 from .__version__ import __description__
-from .cleanup_store_scope import CleanupStoreScope
-from .cleanup_store_release import CleanupStoreRelease
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%H:%M:%S')
 
@@ -43,20 +41,11 @@ subparsers = parser.add_subparsers(dest='command')
 # store subparser
 parser_store = subparsers.add_parser('store', help='Store artifacts of this job in a draft release for the later collection in the "publish" command job.')
 parser_store.add_argument('artifact_dir', metavar='artifact-dir', help='Path to a directory containing artifacts that need to be stored.')
-temporary_draft_release.args(parser_store)
+temporary_draft_release.publish_args(parser_store)
 
 # cleanup store subparser
-
-def _enum_to_choices(enum_calss):
-    return [e.name.lower().replace('_', '-') for e in enum_calss]
-
-def _choices_to_enum(enum_calss, choices):
-    return [enum_calss[s.upper().replace('-', '_')] for s in choices]
-
 parser_cleanup_store = subparsers.add_parser('cleanup_store', help='Delete the releases created by the "store" command.')
-parser_cleanup_store.add_argument('--scope', nargs='+', type=str, choices=_enum_to_choices(CleanupStoreScope), required=True, help="Scope to cleanup.")
-parser_cleanup_store.add_argument('--release', nargs='+', type=str, choices=_enum_to_choices(CleanupStoreRelease), required=True, help="Release to cleanup.")
-parser_cleanup_store.add_argument('--on-nonallowed-failure', default=False, action='store_true', help='Cleanup only if the current build has a job that both has failed and doesn\'t have allow_failure set on it, i.e. the current build is going to fail once the current stage finishes running.')
+temporary_draft_release.cleanup_args(parser_cleanup_store)
 
 # collect subparser
 parser_collect = subparsers.add_parser('collect', help='Collect artifacts from all draft releases created by the "store" command during this build in a directory.')
@@ -101,12 +90,11 @@ try:
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
         if len(os.listdir(args.artifact_dir)) <= 0:
             raise exception.CIReleasePublisherError('No artifacts were found in "{}" directory.'.format(args.artifact_dir))
-        temporary_draft_release.publish_validate_args(args)
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
         temporary_draft_release.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
     elif args.command == 'cleanup_store':
         releases = github.Github(login_or_token=env.required('GITHUB_ACCESS_TOKEN'), base_url=args.github_api_url).get_repo(env.required('TRAVIS_REPO_SLUG')).get_releases()
-        temporary_draft_release.cleanup_store(releases, _choices_to_enum(CleanupStoreScope, args.scope), _choices_to_enum(CleanupStoreRelease, args.release), args.on_nonallowed_failure, args.github_api_url, travis_api_url)
+        temporary_draft_release.cleanup_with_args(args, releases, args.github_api_url, travis_api_url)
     elif args.command == 'collect':
         if not os.path.isdir(args.artifact_dir):
             raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))

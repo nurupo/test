@@ -26,10 +26,10 @@ def _break_tag_name(tag_name):
 def _tag_name_tmp(travis_branch, travis_build_number):
     return '{}{}'.format(config.tag_prefix_tmp, _tag_name(travis_branch, travis_build_number))
 
-def _break_tag_name_tmp(tag_name_tmp):
-    if not tag_name_tmp.startswith(config.tag_prefix_tmp):
+def _break_tag_name_tmp(tag_name):
+    if not tag_name.startswith(config.tag_prefix_tmp):
         return {'matched': False}
-    tag_name = tag_name_tmp[len(config.tag_prefix_tmp):]
+    tag_name = tag_name[len(config.tag_prefix_tmp):]
     return _break_tag_name(tag_name)
 
 def _retention_policy(releases, numbered_release_keep_count, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch, travis_build_number):
@@ -46,6 +46,8 @@ def _retention_policy(releases, numbered_release_keep_count, numbered_release_ke
     previous_numbered_releases = [r for r in releases if _break_tag_name(r.tag_name)['matched'] and
                                                          _break_tag_name(r.tag_name)['branch'] == travis_branch and
                                                          int(_break_tag_name(r.tag_name)['build_number']) < int(travis_build_number)]
+    # Sort for a better presentation when printing
+    # Also, _retention_policy_by_count() relies on them being sorted in this exact order
     previous_numbered_releases = sorted(previous_numbered_releases, key=lambda r: int(_break_tag_name(r.tag_name)['build_number']))
     _retention_policy_by_count(previous_numbered_releases, numbered_release_keep_count, github_token, github_api_url, travis_repo_slug, travis_branch)
     _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch)
@@ -57,8 +59,8 @@ def _retention_policy_by_count(previous_numbered_releases, numbered_release_keep
     extra_numbered_releases_to_remove = (len(previous_numbered_releases) + 1) - numbered_release_keep_count
     if extra_numbered_releases_to_remove < 0:
         extra_numbered_releases_to_remove = 0
-    logging.info('Found {} previous numbered release(s) for "{}" branch. Accounting for the one we are about to create, {} of existing numbered releases must be deleted.'.format(
-        len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
+    logging.info('Found {} previous numbered release(s) for "{}" branch. Accounting for the one we are about to create, {} of existing numbered releases must be deleted.'
+                 .format(len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
     for release in previous_numbered_releases[:extra_numbered_releases_to_remove]:
         try:
             github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
@@ -70,9 +72,9 @@ def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_
     if numbered_release_keep_time <= 0:
         return
     expired_previous_numbered_releases = [r for r in previous_numbered_releases if (datetime.datetime.now() - r.created_at).total_seconds() > numbered_release_keep_time]
-    logging.info('Keeping only numbered releases that are not older than {} seconds for "{}" branch.'.format(numbered_release_keep_time, travis_branch))
-    logging.info('Found {} numbered release(s) for "{}" branch. {} of them will be deleted due to being too old.'.format(
-        len(previous_numbered_releases), travis_branch, len(expired_previous_numbered_releases)))
+    logging.info('Keeping numbered releases that are not older than {} seconds for "{}" branch.'.format(numbered_release_keep_time, travis_branch))
+    logging.info('Found {} numbered release(s) for "{}" branch. {} of them will be deleted due to being too old.'
+                 .format(len(previous_numbered_releases), travis_branch, len(expired_previous_numbered_releases)))
     for release in expired_previous_numbered_releases:
         try:
             github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
@@ -82,7 +84,7 @@ def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_
 
 def publish_args(parser):
     parser.add_argument('--numbered-release', default=False, action='store_true',
-                        help='Publish a numbered release. A separate "{}-<branch>-<build_number>" tag release will be made for each build. '
+                        help='Publish a numbered release. A separate "{}-<branch>-<build_number>" release will be made for each build. '
                              'You must specify at least one of --numbered-release-keep-* arguments specifying the strategy for keeping numbered builds.'
                              .format(config.tag_prefix))
     parser.add_argument('--numbered-release-keep-count', type=int, default=0,
@@ -97,7 +99,6 @@ def publish_args(parser):
     parser.add_argument('--numbered-release-draft', default=False, action='store_true', help='Publish as a draft.')
     parser.add_argument('--numbered-release-prerelease', default=False, action='store_true', help='Publish as a prerelease.')
 
-
 def publish_validate_args(args):
     if not args.numbered_release:
         return False
@@ -106,7 +107,7 @@ def publish_validate_args(args):
     if args.numbered_release_keep_time < 0:
         raise exception.CIReleasePublisherError('--numbered-release-keep-time can\'t be set to a negative number.')
     if args.numbered_release_keep_count == 0 and args.numbered_release_keep_time == 0:
-        raise exception.CIReleasePublisherError('You must specify at least one of --numbered-release-keep-* options specifying the strategy for keeping numbered builds.')
+        raise exception.CIReleasePublisherError('You must specify at least one of --numbered-release-keep-* options specifying the strategy for keeping numbered releases.')
     return True
 
 def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_url, travis_url):
@@ -114,26 +115,6 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
         return
     publish(releases, artifact_dir, args.numbered_release_keep_count, args.numbered_release_keep_time, args.numbered_release_name, args.numbered_release_body,
             args.numbered_release_draft, args.numbered_release_prerelease, github_api_url, travis_url)
-
-def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
-    github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
-    travis_branch       = env.required('TRAVIS_BRANCH')
-    travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
-    travis_tag          = env.optional('TRAVIS_TAG')
-
-    if travis_tag:
-        return
-    logging.info('* Deleting draft releases left over by previous numbered releases due to their builds failing or being cancelled.')
-    # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
-    previous_numbered_releases_tmp = [r for r in releases if r.draft and _break_tag_name_tmp(r.tag_name)['matched'] and _break_tag_name_tmp(r.tag_name)['branch'] == travis_branch and
-                                      ( (int(_break_tag_name_tmp(r.tag_name)['build_number']) == int(travis_build_number)) or ( (int(_break_tag_name_tmp(r.tag_name)['build_number']) < int(travis_build_number)) and (_break_tag_name_tmp(r.tag_name)['build_number'] not in branch_unfinished_build_numbers) ) )]
-    previous_numbered_releases_tmp = sorted(previous_numbered_releases_tmp, key=lambda r: int(_break_tag_name_tmp(r.tag_name)['build_number']))
-    for r in previous_numbered_releases_tmp:
-        try:
-            github_helper.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
-        except Exception as e:
-            logging.exception('Error: {}'.format(str(e)))
 
 def publish(releases, artifact_dir, numbered_release_keep_count, numbered_release_keep_time, numbered_release_name, numbered_release_body, numbered_release_draft, numbered_release_prerelease, github_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
@@ -147,16 +128,16 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
     if travis_tag:
         return
     tag_name = _tag_name(travis_branch, travis_build_number)
-    logging.info('* Starting the procedure of creating a numbered release with tag name "{}".'.format(tag_name))
+    logging.info('* Creating a numbered release with the tag name "{}".'.format(tag_name))
     _retention_policy(releases, numbered_release_keep_count, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch, travis_build_number)
     tag_name_tmp = _tag_name_tmp(travis_branch, travis_build_number)
-    logging.info('Creating a numbered draft release with tag name "{}".'.format(tag_name_tmp))
+    logging.info('Creating a numbered draft release with the tag name "{}".'.format(tag_name_tmp))
     release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=numbered_release_name if numbered_release_name else
              'CI build of {} branch #{}'.format(travis_branch, travis_build_number),
         message=numbered_release_body if numbered_release_body else
-                'This is an auto-generated release based on [Travis-CI build #{}]({}/{}/builds/{})'
+                'This is an auto-generated release based on a [Travis-CI build #{}]({}/{}/builds/{})'
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=numbered_release_prerelease,
@@ -168,3 +149,31 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
         github_helper.delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if numbered_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=numbered_release_draft, prerelease=numbered_release_prerelease, tag_name=tag_name)
+
+def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
+    github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
+    travis_branch       = env.required('TRAVIS_BRANCH')
+    travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
+    travis_tag          = env.optional('TRAVIS_TAG')
+
+    if travis_tag:
+        return
+    logging.info('* Deleting incomplete numbered releases left over due to jobs failing or being cancelled.')
+    # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
+    numbered_releases_incomplete = [r for r in releases if r.draft and
+                                    _break_tag_name_tmp(r.tag_name)['matched'] and
+                                    _break_tag_name_tmp(r.tag_name)['branch'] == travis_branch and
+                                    (
+                                        (int(_break_tag_name_tmp(r.tag_name)['build_number']) == int(travis_build_number)) or
+                                        (
+                                            (int(_break_tag_name_tmp(r.tag_name)['build_number']) < int(travis_build_number)) and
+                                            (_break_tag_name_tmp(r.tag_name)['build_number'] not in branch_unfinished_build_numbers)
+                                        )
+                                    )]
+    numbered_releases_incomplete = sorted(numbered_releases_incomplete, key=lambda r: int(_break_tag_name_tmp(r.tag_name)['build_number']))
+    for r in numbered_releases_incomplete:
+        try:
+            github_helper.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
+        except Exception as e:
+            logging.exception('Error: {}'.format(str(e)))

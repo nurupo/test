@@ -42,7 +42,7 @@ class Travis:
 
     # Returns a list of build numbers of all builds that have not finished for a branch.
     # "not finished" basically means that a build is active (queued/running). it could be a restarted build too.
-    # build numbers are str, not int.
+    # Note that the returned build numbers are str, not int.
     def branch_unfinished_build_numbers(self, repo_slug, branch_name):
         _repo_slug = requests.utils.quote(repo_slug, safe='')
         _branch_name = requests.utils.quote(branch_name, safe='')
@@ -75,7 +75,7 @@ class Travis:
                 break
         return build_numbers
 
-    # Returns True if the build has a job that both has failed and doesn't have allow_failure set on it
+    # Returns True if the build has a job that both has failed and doesn't have allow_failure set on it.
     def build_has_failed_nonallowfailure_job(self, build_id):
         # API doc: https://developer.travis-ci.com/resource/build
         # API doc: https://developer.travis-ci.com/resource/jobs
