@@ -3,6 +3,7 @@
 import requests
 
 from . import config
+from .requests_retry import requests_retry
 
 # Apparently there is no Traivis API python library that supports the latest API version (v3).
 # There is travispy, it supports v2 (v2 is being phased out this (2018) year) and it doesn't
@@ -29,7 +30,7 @@ class Travis:
             'User-Agent': cls._headers['User-Agent'],
         }
         # API doc: https://docs.travis-ci.com/api/?http#with-a-github-token
-        response = requests.post('{}/auth/github'.format(travis_api_url), headers=headers, params={'github_token': github_token})
+        response = requests_retry().post('{}/auth/github'.format(travis_api_url), headers=headers, params={'github_token': github_token}, timeout=config.timeout)
         try:
             return Travis(response.json()['access_token'], travis_api_url)
         except Exception as e:
@@ -42,7 +43,7 @@ class Travis:
         _repo_slug = requests.utils.quote(repo_slug, safe='')
         _branch_name = requests.utils.quote(branch_name, safe='')
         # API doc: https://developer.travis-ci.com/resource/branch
-        response = requests.get('{}/repo/{}/branch/{}'.format(self._api_url, _repo_slug, _branch_name), headers=self._headers)
+        response = requests_retry().get('{}/repo/{}/branch/{}'.format(self._api_url, _repo_slug, _branch_name), headers=self._headers, timeout=config.timeout)
         return response.json()['last_build']['number']
 
     # Returns a list of build numbers of all builds that have not finished for a branch.
@@ -67,7 +68,7 @@ class Travis:
                 'limit': limit,
             }
             # API doc: https://developer.travis-ci.com/resource/builds
-            response = requests.get('{}/repo/{}/builds'.format(self._api_url, _repo_slug, _branch_name), headers=self._headers, params=params)
+            response = requests_retry().get('{}/repo/{}/builds'.format(self._api_url, _repo_slug, _branch_name), headers=self._headers, params=params, timeout=config.timeout)
             json = response.json()
             offset += json['@pagination']['limit']
             count = json['@pagination']['count']
@@ -87,5 +88,5 @@ class Travis:
         params = {
             'include': 'job.allow_failure,job.state',
         }
-        response = requests.get('{}/build/{}'.format(self._api_url, build_id), headers=self._headers, params=params)
+        response = requests_retry().get('{}/build/{}'.format(self._api_url, build_id), headers=self._headers, params=params, timeout=config.timeout)
         return any([j for j in response.json()['jobs'] if j['state'] == 'failed' and not j['allow_failure']])

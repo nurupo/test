@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import cgi
-import github
 import logging
 import os
-import requests
 import shutil
+from github import Github
 
 from . import config
+from .requests_retry import requests_retry
 
 # Various GitHub helpers
+
+def github(github_token, github_api_url):
+    # 100 items per page is the max https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
+    return Github(login_or_token=github_token, base_url=github_api_url, per_page=100, timeout=config.timeout, retry=config.retries(), user_agent=config.user_agent)
 
 def download_artifact(github_token, src_url, dst_dir):
     # API doc: https://developer.github.com/v3/repos/releases/#get-a-single-release-asset
@@ -20,7 +24,7 @@ def download_artifact(github_token, src_url, dst_dir):
         'Accept': 'application/octet-stream',
         'User-Agent': config.user_agent,
     }
-    r = requests.get(src_url, headers=headers, allow_redirects=True, stream=True)
+    r = requests_retry().get(src_url, headers=headers, allow_redirects=True, stream=True, timeout=config.timeout)
     filename = ''
     # Figure out filename
     # 1. Proper way of doing it
@@ -65,4 +69,4 @@ def delete_release_with_tag(release, github_token, github_api_url, travis_repo_s
     # Published releases create tags and we don't want to keep the tags
     if not release.draft:
         logging.info('Deleting "{}" tag.'.format(release.tag_name))
-        github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()
+        github(github_token, github_api_url).get_repo(travis_repo_slug).get_git_ref('tags/{}'.format(release.tag_name)).delete()

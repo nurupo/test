@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import github
 import logging
 import re
 
 from . import config
 from . import env
-from . import github as github_helper
+from . import github
 from . import travis
 
 _tag_suffix = 'latest'
@@ -72,7 +71,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
         return
     tag_name_tmp = _tag_name_tmp(travis_branch)
     logging.info('Creating a draft release with the tag name "{}".'.format(tag_name_tmp))
-    release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
+    release = github.github(github_token, github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=latest_release_name if latest_release_name else
              'Latest CI build of {} branch'.format(travis_branch),
@@ -82,13 +81,13 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
         draft=True,
         prerelease=latest_release_prerelease,
         target_commitish=travis_commit)
-    github_helper.upload_artifacts(artifact_dir, release)
+    github.upload_artifacts(artifact_dir, release)
     if not _is_latest_build_for_branch():
-        github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+        github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
         return
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
-        github_helper.delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
+        github.delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=latest_release_draft, prerelease=latest_release_prerelease, tag_name=tag_name)
 
@@ -110,6 +109,6 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
         return
     for r in latest_releases_incomplete:
         try:
-            github_helper.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))

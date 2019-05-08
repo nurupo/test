@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum, auto, unique
-import github
 import logging
 import re
 
 from . import config
 from . import env
-from . import github as github_helper
+from . import github
 from . import travis
 
 _tag_suffix = 'tmp'
@@ -53,7 +52,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
     logging.info('* Creating a temporary store release with the tag name "{}".'.format(tag_name))
     tag_name_tmp = _tag_name_tmp(travis_branch, travis_build_number, travis_job_number)
     logging.info('Creating a release with the tag name "{}".'.format(tag_name_tmp))
-    release = github.Github(login_or_token=github_token, base_url=github_api_url).get_repo(travis_repo_slug).create_git_release(
+    release = github.github(github_token, github_api_url).get_repo(travis_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=release_name if release_name else
              'Temporary store release {}'
@@ -66,7 +65,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
         draft=True,
         prerelease=True,
         target_commitish=travis_commit)
-    github_helper.upload_artifacts(artifact_dir, release)
+    github.upload_artifacts(artifact_dir, release)
     logging.info('Changing the tag name from "{}" to "{}".'.format(tag_name_tmp, tag_name))
     release.update_release(name=release.title, message=release.body, draft=True, prerelease=True, tag_name=tag_name)
 
@@ -163,7 +162,7 @@ def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, git
 
     for release in releases_to_delete:
         try:
-            github_helper.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))
 
@@ -186,4 +185,4 @@ def download(releases, artifact_dir):
         logging.info('Couldn\'t find any temporary store releases for this build.')
         return
     for release in releases_stored:
-        github_helper.download_artifcats(github_token, release, artifact_dir)
+        github.download_artifcats(github_token, release, artifact_dir)
