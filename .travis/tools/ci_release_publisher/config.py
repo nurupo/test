@@ -7,7 +7,7 @@ from .__version__ import __title__, __version__
 user_agent = '{} {}'.format(__title__, __version__)
 tag_prefix = 'ci'
 tag_prefix_tmp = '_'
-timeout = 10
+timeout = 15
 
 def retries():
-    return Retry(total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+    return Retry(total=7, backoff_factor=0.1, status_forcelist=[403, 500, 502, 503, 504])
