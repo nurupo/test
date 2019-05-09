@@ -39,6 +39,7 @@ matrix:
         - .travis/ci_release_publisher_store.sh "$TRAVIS_BUILD_DIR/deploy"
         - .travis/ci_release_publisher_cleanup2.sh
     - stage: "Build"
+      allow_failure: true
       env: JOB="Linux AppImage arm64"
       script:
         - sudo docker run --rm -v $PWD:/repo debian:stretch-slim /bin/bash /repo/.travis/build_linux.sh arm64
@@ -48,7 +49,7 @@ matrix:
         - .travis/ci_release_publisher_cleanup2.sh
     - stage: "Hm"
       script:
-        - sleep 10
+        - /bin/false
         - .travis/ci_release_publisher_cleanup3.sh
     - stage: "Deploy"
       if: type != pull_request
