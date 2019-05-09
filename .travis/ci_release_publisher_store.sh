@@ -2,13 +2,13 @@
 
 set -exuo pipefail
 
-if [ ! -z "$TRAVIS_TEST_RESULT" ] && [ "$TRAVIS_TEST_RESULT" != "0" ]; then
-  echo "Build has failed, skipping publishing"
+if [ ! -z "$TRAVIS_PULL_REQUEST" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+  echo "Skipping publishing in a Pull Request"
   exit 0
 fi
 
-if [ ! -z "$TRAVIS_PULL_REQUEST" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-  echo "Skipping publishing in a Pull Request"
+if [ ! -z "$TRAVIS_TEST_RESULT" ] && [ "$TRAVIS_TEST_RESULT" != "0" ]; then
+  echo "Build has failed, skipping publishing"
   exit 0
 fi
 
