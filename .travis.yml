@@ -11,6 +11,7 @@ matrix:
   fast_finish: true
   allow_failures:
     - env: JOB="Linux AppImage arm64"
+    - env: JOB="foo"
   include:
     - stage: "Build"
       env: JOB="Linux AppImage amd64"
@@ -49,6 +50,7 @@ matrix:
         - .travis/ci_release_publisher_store.sh "$TRAVIS_BUILD_DIR/deploy"
         - .travis/ci_release_publisher_cleanup2.sh
     - stage: "Hm"
+      env: JOB="foo"
       script:
         - /bin/false
         - .travis/ci_release_publisher_cleanup3.sh
