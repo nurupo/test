@@ -15,7 +15,7 @@ def _tag_name(travis_tag):
     return '{}'.format(travis_tag)
 
 def _break_tag_name(tag_name):
-    return {'matched': True, 'tag': tag_name}
+    return {'tag': tag_name}
 
 def _tag_name_tmp(travis_tag):
     return '{}{}-{}-{}'.format(config.tag_prefix_tmp, config.tag_prefix, _tag_name(travis_tag), _tmp_tag_suffix)
@@ -23,10 +23,10 @@ def _tag_name_tmp(travis_tag):
 def _break_tag_name_tmp(tag_name):
     prefix = '{}{}'.format(config.tag_prefix_tmp, config.tag_prefix)
     if not tag_name.startswith(prefix) or not tag_name.endswith(_tmp_tag_suffix):
-        return {'matched': False}
+        return None
     tag_name = tag_name[len(prefix):-len(_tmp_tag_suffix)]
     if not tag_name.startswith('-') or not tag_name.endswith('-'):
-        return {'matched': False}
+        return None
     tag_name = tag_name[1:-1]
     return _break_tag_name(tag_name)
 
@@ -115,7 +115,7 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     logging.info('* Deleting incomplete tag releases left over due to jobs failing or being cancelled.')
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
     tag_releases_incomplete = [r for r in releases if r.draft and
-                               _break_tag_name_tmp(r.tag_name)['matched'] and
+                               _break_tag_name_tmp(r.tag_name) and
                                _break_tag_name_tmp(r.tag_name)['tag'] == travis_tag]
     if not tag_releases_incomplete or any(n != travis_build_number for n in branch_unfinished_build_numbers):
         return

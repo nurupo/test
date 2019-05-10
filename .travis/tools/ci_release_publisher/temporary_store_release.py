@@ -16,19 +16,19 @@ def _tag_name(travis_branch, travis_build_number, travis_job_number):
 
 def _break_tag_name(tag_name):
     if not tag_name.startswith(config.tag_prefix) or not tag_name.endswith(_tag_suffix):
-        return {'matched': False}
+        return None
     tag_name = tag_name[len(config.tag_prefix):-len(_tag_suffix)]
     m = re.match('^-(?P<branch>.*)-(?P<build_number>\d+)-(?P<job_number>\d+)-$', tag_name)
     if not m:
-        return {'matched': False}
-    return {'matched': True, 'branch': m.group('branch'), 'build_number': m.group('build_number'), 'job_number': m.group('job_number')}
+        return None
+    return {'branch': m.group('branch'), 'build_number': m.group('build_number'), 'job_number': m.group('job_number')}
 
 def _tag_name_tmp(travis_branch, travis_build_number, travis_job_number):
     return '{}{}'.format(config.tag_prefix_tmp, _tag_name(travis_branch, travis_build_number, travis_job_number))
 
 def _break_tag_name_tmp(tag_name):
     if not tag_name.startswith(config.tag_prefix_tmp):
-        return {'matched': False}
+        return None
     tag_name = tag_name[len(config.tag_prefix_tmp):]
     return _break_tag_name(tag_name)
 
@@ -128,13 +128,9 @@ def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, git
 
         info = None
         if not info and CleanupRelease.COMPLETE in release_completenesses:
-            _info = _break_tag_name(r.tag_name)
-            if _info['matched']:
-                info = _info
+            info = _break_tag_name(r.tag_name)
         if not info and CleanupRelease.INCOMPLETE in release_completenesses:
-            _info = _break_tag_name_tmp(r.tag_name)
-            if _info['matched']:
-                info = _info
+            info = _break_tag_name_tmp(r.tag_name)
 
         if not info:
             return False
@@ -154,10 +150,10 @@ def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, git
     releases_to_delete = [r for r in releases if should_delete(r)]
 
     # Sort for a better presentation when printing
-    releases_to_delete = sorted(releases_to_delete, key=lambda r: _break_tag_name(r.tag_name)['matched'])
-    releases_to_delete = sorted(releases_to_delete, key=lambda r: int(_break_tag_name(r.tag_name)['job_number'] if _break_tag_name(r.tag_name)['matched']
+    releases_to_delete = sorted(releases_to_delete, key=lambda r: not not _break_tag_name(r.tag_name))
+    releases_to_delete = sorted(releases_to_delete, key=lambda r: int(_break_tag_name(r.tag_name)['job_number'] if _break_tag_name(r.tag_name)
                                                                       else _break_tag_name_tmp(r.tag_name)['job_number']))
-    releases_to_delete = sorted(releases_to_delete, key=lambda r: int(_break_tag_name(r.tag_name)['build_number'] if _break_tag_name(r.tag_name)['matched']
+    releases_to_delete = sorted(releases_to_delete, key=lambda r: int(_break_tag_name(r.tag_name)['build_number'] if _break_tag_name(r.tag_name)
                                                                       else _break_tag_name_tmp(r.tag_name)['build_number']))
 
     for release in releases_to_delete:
@@ -176,7 +172,7 @@ def download(releases, artifact_dir):
 
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
     releases_stored = [r for r in releases if r.draft and
-                       _break_tag_name(r.tag_name)['matched'] and
+                       _break_tag_name(r.tag_name) and
                        _break_tag_name(r.tag_name)['branch'] == travis_branch and
                        int(_break_tag_name(r.tag_name)['build_number']) == int(travis_build_number)]
     # Sort for a better presentation when printing

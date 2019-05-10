@@ -15,11 +15,11 @@ def _tag_name(travis_branch):
 
 def _break_tag_name(tag_name):
     if not tag_name.startswith(config.tag_prefix) or not tag_name.endswith(_tag_suffix):
-        return {'matched': False}
+        return None
     tag_name = tag_name[len(config.tag_prefix):-len(_tag_suffix)]
     m = re.match('^-(?P<branch>.*)-$', tag_name)
     if not m:
-        return {'matched': False}
+        return None
     return {'matched': True, 'branch': m.group('branch')}
 
 def _tag_name_tmp(travis_branch):
@@ -27,7 +27,7 @@ def _tag_name_tmp(travis_branch):
 
 def _break_tag_name_tmp(tag_name):
     if not tag_name.startswith(config.tag_prefix_tmp):
-        return {'matched': False}
+        return None
     tag_name = tag_name[len(config.tag_prefix_tmp):]
     return _break_tag_name(tag_name)
 
@@ -103,7 +103,7 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     logging.info('* Deleting incomplete latest releases left over due to jobs failing or being cancelled.')
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
     latest_releases_incomplete = [r for r in releases if r.draft and
-                                  _break_tag_name_tmp(r.tag_name)['matched'] and
+                                  _break_tag_name_tmp(r.tag_name) and
                                   _break_tag_name_tmp(r.tag_name)['branch'] == travis_branch]
     if not latest_releases_incomplete or any(n != travis_build_number for n in branch_unfinished_build_numbers):
         return

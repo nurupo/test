@@ -15,19 +15,19 @@ def _tag_name(travis_branch, travis_build_number):
 
 def _break_tag_name(tag_name):
     if not tag_name.startswith(config.tag_prefix):
-        return {'matched': False}
+        return None
     tag_name = tag_name[len(config.tag_prefix):]
     m = re.match('^-(?P<branch>.*)-(?P<build_number>\d+)$', tag_name)
     if not m:
-        return {'matched': False}
-    return {'matched': True, 'branch': m.group('branch'), 'build_number': m.group('build_number')}
+        return None
+    return {'branch': m.group('branch'), 'build_number': m.group('build_number')}
 
 def _tag_name_tmp(travis_branch, travis_build_number):
     return '{}{}'.format(config.tag_prefix_tmp, _tag_name(travis_branch, travis_build_number))
 
 def _break_tag_name_tmp(tag_name):
     if not tag_name.startswith(config.tag_prefix_tmp):
-        return {'matched': False}
+        return None
     tag_name = tag_name[len(config.tag_prefix_tmp):]
     return _break_tag_name(tag_name)
 
@@ -42,7 +42,7 @@ def _retention_policy(releases, numbered_release_keep_count, numbered_release_ke
     # (To clarify a possible confusion, if you restart build #10 it remains being build #10, it
     # doesn't change its build number to, say, #1001.)
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
-    previous_numbered_releases = [r for r in releases if _break_tag_name(r.tag_name)['matched'] and
+    previous_numbered_releases = [r for r in releases if _break_tag_name(r.tag_name) and
                                                          _break_tag_name(r.tag_name)['branch'] == travis_branch and
                                                          int(_break_tag_name(r.tag_name)['build_number']) < int(travis_build_number)]
     # Sort for a better presentation when printing
@@ -161,7 +161,7 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     logging.info('* Deleting incomplete numbered releases left over due to jobs failing or being cancelled.')
     # FIXME(nurupo): once Python 3.8 is out, use Assignemnt Expression to prevent expensive _break_tag_name() calls https://www.python.org/dev/peps/pep-0572/
     numbered_releases_incomplete = [r for r in releases if r.draft and
-                                    _break_tag_name_tmp(r.tag_name)['matched'] and
+                                    _break_tag_name_tmp(r.tag_name) and
                                     _break_tag_name_tmp(r.tag_name)['branch'] == travis_branch and
                                     (
                                         (int(_break_tag_name_tmp(r.tag_name)['build_number']) == int(travis_build_number)) or
