@@ -12,7 +12,7 @@ if [ ! -z "$TRAVIS_TEST_RESULT" ] && [ "$TRAVIS_TEST_RESULT" != "0" ]; then
   exit 0
 fi
 
-if [ -z "$ARTIFACTS_DIR"]; then
+if [ -z "$ARTIFACTS_DIR" ]; then
   echo "Error: Environment varialbe ARTIFACTS_DIR is not set."
   exit 1
 fi
