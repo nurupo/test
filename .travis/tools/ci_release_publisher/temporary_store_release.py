@@ -54,7 +54,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
     tag_name_tmp = _tag_name_tmp(travis_branch, travis_build_number, travis_job_number)
     logging.info('Creating a release with the tag name "{}".'.format(tag_name_tmp))
     print('travis_repo_slug: "{}"'.format(travis_repo_slug))
-    print('github_repo_slug: "{}"'.format(github_repo_slug))
+    print('github_repo_slug: "{}"'.format(env.optional('GITHUB_REPO_SLUG')))
     release = github.github(github_token, github_api_url).get_repo(github_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=release_name if release_name else
