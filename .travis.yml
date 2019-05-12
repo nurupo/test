@@ -12,6 +12,7 @@ matrix:
   allow_failures:
     - env: JOB="Linux AppImage arm64-"
     - env: JOB="foo-"
+  - env: GITHUB_REPO_SLUG="nurupo-test/test"
   include:
     - stage: "Build"
       env: JOB="Linux AppImage amd64"
