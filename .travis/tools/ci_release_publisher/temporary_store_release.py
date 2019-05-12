@@ -41,6 +41,7 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
 
 def publish(releases, artifact_dir, release_name, release_body, github_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_commit       = env.required('TRAVIS_COMMIT')
@@ -52,7 +53,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
     logging.info('* Creating a temporary store release with the tag name "{}".'.format(tag_name))
     tag_name_tmp = _tag_name_tmp(travis_branch, travis_build_number, travis_job_number)
     logging.info('Creating a release with the tag name "{}".'.format(tag_name_tmp))
-    release = github.github(github_token, github_api_url).get_repo(travis_repo_slug).create_git_release(
+    release = github.github(github_token, github_api_url).get_repo(github_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=release_name if release_name else
              'Temporary store release {}'
@@ -99,6 +100,7 @@ def cleanup_with_args(args, releases, github_api_url, travis_api_url):
 
 def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, github_api_url, travis_api_url):
     github_token         = env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug     = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug     = env.required('TRAVIS_REPO_SLUG')
     travis_branch        = env.required('TRAVIS_BRANCH')
     travis_build_number  = env.required('TRAVIS_BUILD_NUMBER')
@@ -158,13 +160,12 @@ def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, git
 
     for release in releases_to_delete:
         try:
-            github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))
 
 def download(releases, artifact_dir):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
 

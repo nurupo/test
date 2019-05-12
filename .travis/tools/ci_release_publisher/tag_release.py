@@ -55,6 +55,7 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
 
 def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_release_draft, tag_release_prerelease, tag_release_force_recreate, github_api_url, travis_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_commit       = env.required('TRAVIS_COMMIT')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
@@ -76,7 +77,7 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
         return
     tag_name_tmp = _tag_name_tmp(travis_tag)
     logging.info('Creating a release with the tag name "{}".'.format(tag_name_tmp))
-    release = github.github(github_token, github_api_url).get_repo(travis_repo_slug).create_git_release(
+    release = github.github(github_token, github_api_url).get_repo(github_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=tag_release_name if tag_release_name else tag_name,
         message=tag_release_body if tag_release_body else
@@ -87,7 +88,7 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
         target_commitish=travis_commit)
     github.upload_artifacts(artifact_dir, release)
     if not _is_latest_build_for_branch():
-        github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+        github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         return
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
@@ -96,7 +97,7 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
             logging.info('Deleting a release with the tag name "{}".'.format(tag_name))
             previous_release[0].delete_release()
         else:
-            github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
             raise exception.CIReleasePublisherError('Tag release with the tag name "{}" already exists. Are you sure you meant to recreate the tag release? '
                                                     'Recreating a publicly visible tag release might be disastrous, as all the changes you have done to the release -- changed text, '
                                                     'extra artifacts and so on -- will be lost, as well as hashes of the files created as part of the build might change. '
@@ -106,7 +107,7 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
+    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
     travis_tag          = env.optional('TRAVIS_TAG')
 
@@ -121,6 +122,6 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
         return
     for r in tag_releases_incomplete:
         try:
-            github.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(r, github_token, github_api_url, github_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))

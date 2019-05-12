@@ -49,6 +49,7 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
 
 def publish(releases, artifact_dir, latest_release_name, latest_release_body, latest_release_draft, latest_release_prerelease, github_api_url, travis_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_commit       = env.required('TRAVIS_COMMIT')
@@ -71,7 +72,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
         return
     tag_name_tmp = _tag_name_tmp(travis_branch)
     logging.info('Creating a draft release with the tag name "{}".'.format(tag_name_tmp))
-    release = github.github(github_token, github_api_url).get_repo(travis_repo_slug).create_git_release(
+    release = github.github(github_token, github_api_url).get_repo(github_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=latest_release_name if latest_release_name else
              'Latest CI build of {} branch'.format(travis_branch),
@@ -83,17 +84,17 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
         target_commitish=travis_commit)
     github.upload_artifacts(artifact_dir, release)
     if not _is_latest_build_for_branch():
-        github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+        github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         return
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
-        github.delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
+        github.delete_release_with_tag(previous_release[0], github_token, github_api_url, github_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=latest_release_draft, prerelease=latest_release_prerelease, tag_name=tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
+    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
     travis_tag          = env.optional('TRAVIS_TAG')
@@ -109,6 +110,6 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
         return
     for r in latest_releases_incomplete:
         try:
-            github.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(r, github_token, github_api_url, github_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))

@@ -31,7 +31,7 @@ def _break_tag_name_tmp(tag_name):
     tag_name = tag_name[len(config.tag_prefix_tmp):]
     return _break_tag_name(tag_name)
 
-def _retention_policy(releases, numbered_release_keep_count, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch, travis_build_number):
+def _retention_policy(releases, numbered_release_keep_count, numbered_release_keep_time, github_token, github_api_url, github_repo_slug, travis_branch, travis_build_number):
     logging.info('Executing retention policy rules.')
     # We want to enforce the retention policy only on the build numbers lower than ours. As to why,
     # imagine the case where build #10 for branch 'foo' has a rule to keep only last 3 numbered
@@ -48,10 +48,10 @@ def _retention_policy(releases, numbered_release_keep_count, numbered_release_ke
     # Sort for a better presentation when printing
     # Also, _retention_policy_by_count() relies on them being sorted in this exact order
     previous_numbered_releases = sorted(previous_numbered_releases, key=lambda r: int(_break_tag_name(r.tag_name)['build_number']))
-    _retention_policy_by_count(previous_numbered_releases, numbered_release_keep_count, github_token, github_api_url, travis_repo_slug, travis_branch)
-    _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch)
+    _retention_policy_by_count(previous_numbered_releases, numbered_release_keep_count, github_token, github_api_url, github_repo_slug, travis_branch)
+    _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_time, github_token, github_api_url, github_repo_slug, travis_branch)
 
-def _retention_policy_by_count(previous_numbered_releases, numbered_release_keep_count, github_token, github_api_url, travis_repo_slug, travis_branch):
+def _retention_policy_by_count(previous_numbered_releases, numbered_release_keep_count, github_token, github_api_url, github_repo_slug, travis_branch):
     if numbered_release_keep_count <= 0:
         return
     logging.info('Keeping only {} numbered releases for "{}" branch.'.format(numbered_release_keep_count, travis_branch))
@@ -62,12 +62,12 @@ def _retention_policy_by_count(previous_numbered_releases, numbered_release_keep
                  .format(len(previous_numbered_releases), travis_branch, extra_numbered_releases_to_remove))
     for release in previous_numbered_releases[:extra_numbered_releases_to_remove]:
         try:
-            github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))
     previous_numbered_releases = previous_numbered_releases[extra_numbered_releases_to_remove:]
 
-def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch):
+def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_time, github_token, github_api_url, github_repo_slug, travis_branch):
     if numbered_release_keep_time <= 0:
         return
     expired_previous_numbered_releases = [r for r in previous_numbered_releases if (datetime.datetime.now() - r.created_at).total_seconds() > numbered_release_keep_time]
@@ -76,7 +76,7 @@ def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_
                  .format(len(previous_numbered_releases), travis_branch, len(expired_previous_numbered_releases)))
     for release in expired_previous_numbered_releases:
         try:
-            github.delete_release_with_tag(release, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))
     previous_numbered_releases = [r for r in previous_numbered_releases if r not in expired_previous_numbered_releases]
@@ -117,6 +117,7 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
 
 def publish(releases, artifact_dir, numbered_release_keep_count, numbered_release_keep_time, numbered_release_name, numbered_release_body, numbered_release_draft, numbered_release_prerelease, github_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_commit       = env.required('TRAVIS_COMMIT')
@@ -128,10 +129,10 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
         return
     tag_name = _tag_name(travis_branch, travis_build_number)
     logging.info('* Creating a numbered release with the tag name "{}".'.format(tag_name))
-    _retention_policy(releases, numbered_release_keep_count, numbered_release_keep_time, github_token, github_api_url, travis_repo_slug, travis_branch, travis_build_number)
+    _retention_policy(releases, numbered_release_keep_count, numbered_release_keep_time, github_token, github_api_url, github_repo_slug, travis_branch, travis_build_number)
     tag_name_tmp = _tag_name_tmp(travis_branch, travis_build_number)
     logging.info('Creating a numbered draft release with the tag name "{}".'.format(tag_name_tmp))
-    release = github.github(github_token, github_api_url).get_repo(travis_repo_slug).create_git_release(
+    release = github.github(github_token, github_api_url).get_repo(github_repo_slug).create_git_release(
         tag=tag_name_tmp,
         name=numbered_release_name if numbered_release_name else
              'CI build of {} branch #{}'.format(travis_branch, travis_build_number),
@@ -145,13 +146,13 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
         logging.info('This job appers to have been restarted as "{}" release already exists.'.format(tag_name))
-        github.delete_release_with_tag(previous_release[0], github_token, github_api_url, travis_repo_slug)
+        github.delete_release_with_tag(previous_release[0], github_token, github_api_url, github_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if numbered_release_draft else ' and removing the draft flag'))
     release.update_release(name=release.title, message=release.body, draft=numbered_release_draft, prerelease=numbered_release_prerelease, tag_name=tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
+    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
     travis_tag          = env.optional('TRAVIS_TAG')
@@ -173,6 +174,6 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     numbered_releases_incomplete = sorted(numbered_releases_incomplete, key=lambda r: int(_break_tag_name_tmp(r.tag_name)['build_number']))
     for r in numbered_releases_incomplete:
         try:
-            github.delete_release_with_tag(r, github_token, github_api_url, travis_repo_slug)
+            github.delete_release_with_tag(r, github_token, github_api_url, github_repo_slug)
         except Exception as e:
             logging.exception('Error: {}'.format(str(e)))
