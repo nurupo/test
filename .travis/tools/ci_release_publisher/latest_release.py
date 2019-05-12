@@ -112,4 +112,4 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
         try:
             github.delete_release_with_tag(r, github_token, github_api_url, github_repo_slug)
         except Exception as e:
-            logging.exception('Error: {}'.format(str(e)))
+            logging.warning('{}: {}'.format(type(e).__name__, e))

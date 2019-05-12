@@ -64,7 +64,7 @@ def _retention_policy_by_count(previous_numbered_releases, numbered_release_keep
         try:
             github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         except Exception as e:
-            logging.exception('Error: {}'.format(str(e)))
+            logging.warning('{}: {}'.format(type(e).__name__, e))
     previous_numbered_releases = previous_numbered_releases[extra_numbered_releases_to_remove:]
 
 def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_time, github_token, github_api_url, github_repo_slug, travis_branch):
@@ -78,7 +78,7 @@ def _retention_policy_by_time(previous_numbered_releases, numbered_release_keep_
         try:
             github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         except Exception as e:
-            logging.exception('Error: {}'.format(str(e)))
+            logging.warning('{}: {}'.format(type(e).__name__, e))
     previous_numbered_releases = [r for r in previous_numbered_releases if r not in expired_previous_numbered_releases]
 
 def publish_args(parser):
@@ -176,4 +176,4 @@ def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
         try:
             github.delete_release_with_tag(r, github_token, github_api_url, github_repo_slug)
         except Exception as e:
-            logging.exception('Error: {}'.format(str(e)))
+            logging.warning('{}: {}'.format(type(e).__name__, e))

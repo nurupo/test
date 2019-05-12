@@ -162,7 +162,7 @@ def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, git
         try:
             github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
         except Exception as e:
-            logging.exception('Error: {}'.format(str(e)))
+            logging.warning('{}: {}'.format(type(e).__name__, e))
 
 def download(releases, artifact_dir):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
