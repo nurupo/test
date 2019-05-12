@@ -64,8 +64,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
                 'You should not manually delete this release, unless you don\'t use the CI Release Publisher script script anymore.')
                 .format(travis_job_id, travis_url, travis_repo_slug, travis_job_id),
         draft=True,
-        prerelease=True,
-        target_commitish=travis_commit)
+        prerelease=True)
     github.upload_artifacts(artifact_dir, release)
     logging.info('Changing the tag name from "{}" to "{}".'.format(tag_name_tmp, tag_name))
     release.update_release(name=release.title, message=release.body, draft=True, prerelease=True, tag_name=tag_name)
