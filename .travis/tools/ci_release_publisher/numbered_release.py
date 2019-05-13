@@ -97,6 +97,8 @@ def publish_args(parser):
     parser.add_argument('--numbered-release-body', type=str, help='Release body text. If not specified a predefined text is used.')
     parser.add_argument('--numbered-release-draft', default=False, action='store_true', help='Publish as a draft.')
     parser.add_argument('--numbered-release-prerelease', default=False, action='store_true', help='Publish as a prerelease.')
+    parser.add_argument('--numbered-release-target-commitish', type=str,
+                        help='Commit the release should point to. By default it\'s set to $TRAVIS_COMMIT when publishing to the same repo and not set when publishing to a different repo.')
 
 def publish_validate_args(args):
     if not args.numbered_release:
@@ -113,9 +115,9 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
     if not args.numbered_release:
         return
     publish(releases, artifact_dir, args.numbered_release_keep_count, args.numbered_release_keep_time, args.numbered_release_name, args.numbered_release_body,
-            args.numbered_release_draft, args.numbered_release_prerelease, github_api_url, travis_url)
+            args.numbered_release_draft, args.numbered_release_prerelease, args.numbered_release_target_commitish, github_api_url, travis_url)
 
-def publish(releases, artifact_dir, numbered_release_keep_count, numbered_release_keep_time, numbered_release_name, numbered_release_body, numbered_release_draft, numbered_release_prerelease, github_api_url, travis_url):
+def publish(releases, artifact_dir, numbered_release_keep_count, numbered_release_keep_time, numbered_release_name, numbered_release_body, numbered_release_draft, numbered_release_prerelease, numbered_release_target_commitish, github_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
     github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
@@ -141,14 +143,14 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=numbered_release_prerelease,
-        target_commitish=travis_commit)
+        target_commitish=numbered_release_target_commitish if numbered_release_target_commitish else travis_commit if not env.optional('GITHUB_REPO_SLUG') else None)
     github.upload_artifacts(artifact_dir, release)
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
         logging.info('This job appers to have been restarted as "{}" release already exists.'.format(tag_name))
         github.delete_release_with_tag(previous_release[0], github_token, github_api_url, github_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if numbered_release_draft else ' and removing the draft flag'))
-    release.update_release(name=release.title, message=release.body, draft=numbered_release_draft, prerelease=numbered_release_prerelease, tag_name=tag_name)
+    release.update_release(draft=numbered_release_draft, tag_name=tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')

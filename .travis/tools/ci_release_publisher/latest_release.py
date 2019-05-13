@@ -38,6 +38,8 @@ def publish_args(parser):
     parser.add_argument('--latest-release-body', type=str, help='Release body text. If not specified a predefined text is used.')
     parser.add_argument('--latest-release-draft', default=False, action='store_true', help='Publish as a draft.')
     parser.add_argument('--latest-release-prerelease', default=False, action='store_true', help='Publish as a prerelease.')
+    parser.add_argument('--latest-release-target-commitish', type=str,
+                        help='Commit the release should point to. By default it\'s set to $TRAVIS_COMMIT when publishing to the same repo and not set when publishing to a different repo.')
 
 def publish_validate_args(args):
     return args.latest_release
@@ -45,9 +47,9 @@ def publish_validate_args(args):
 def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_url, travis_url):
     if not args.latest_release:
         return
-    publish(releases, artifact_dir, args.latest_release_name, args.latest_release_body, args.latest_release_draft, args.latest_release_prerelease, github_api_url, travis_api_url, travis_url)
+    publish(releases, artifact_dir, args.latest_release_name, args.latest_release_body, args.latest_release_draft, args.latest_release_prerelease, args.latest_release_target_commitish, github_api_url, travis_api_url, travis_url)
 
-def publish(releases, artifact_dir, latest_release_name, latest_release_body, latest_release_draft, latest_release_prerelease, github_api_url, travis_api_url, travis_url):
+def publish(releases, artifact_dir, latest_release_name, latest_release_body, latest_release_draft, latest_release_prerelease, latest_release_target_commitish, github_api_url, travis_api_url, travis_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
     github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
@@ -81,7 +83,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=latest_release_prerelease,
-        target_commitish=travis_commit)
+        target_commitish=latest_release_target_commitish if latest_release_target_commitish else travis_commit if not env.optional('GITHUB_REPO_SLUG') else None)
     github.upload_artifacts(artifact_dir, release)
     if not _is_latest_build_for_branch():
         github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
@@ -90,7 +92,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
     if previous_release:
         github.delete_release_with_tag(previous_release[0], github_token, github_api_url, github_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if latest_release_draft else ' and removing the draft flag'))
-    release.update_release(name=release.title, message=release.body, draft=latest_release_draft, prerelease=latest_release_prerelease, tag_name=tag_name)
+    release.update_release(draft=latest_release_draft, tag_name=tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
