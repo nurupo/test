@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import github.GithubObject.NotSet as NoCommitish
 import logging
 import re
 
@@ -143,7 +144,7 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=numbered_release_prerelease,
-        target_commitish=numbered_release_target_commitish if numbered_release_target_commitish else travis_commit if not env.optional('GITHUB_REPO_SLUG') else None)
+        target_commitish=numbered_release_target_commitish if numbered_release_target_commitish else travis_commit if not env.optional('GITHUB_REPO_SLUG') else NoCommitish)
     github.upload_artifacts(artifact_dir, release)
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from github import Github
 import cgi
 import logging
 import os
 import shutil
-from github import Github
 
 from . import config
 from .requests_retry import requests_retry
