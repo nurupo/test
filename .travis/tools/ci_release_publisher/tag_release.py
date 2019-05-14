@@ -106,7 +106,7 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
                                                     'extra artifacts and so on -- will be lost, as well as hashes of the files created as part of the build might change. '
                                                     'Please manually delete the "{}" release and restart the build if you really meant to recreate the release.'.format(tag_name, tag_name))
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if tag_release_draft else ' and removing the draft flag'))
-    release.update_release(draft=tag_release_draft, tag_name=tag_name)
+    release.update_release(name=release.title, message=release.body, prerelease=release.prerelease, target_commitish=release.target_commitish, draft=tag_release_draft, tag_name=tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')

@@ -69,7 +69,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
         target_commitish=travis_commit if not env.optional('GITHUB_REPO_SLUG') else GithubObject.NotSet)
     github.upload_artifacts(artifact_dir, release)
     logging.info('Changing the tag name from "{}" to "{}".'.format(tag_name_tmp, tag_name))
-    release.update_release(tag_name=tag_name)
+    release.update_release(name=release.title, message=release.body, prerelease=release.prerelease, target_commitish=release.target_commitish, draft=release.draft, tag_name=tag_name)
 
 @unique
 class CleanupScope(Enum):

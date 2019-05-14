@@ -151,7 +151,7 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
         logging.info('This job appers to have been restarted as "{}" release already exists.'.format(tag_name))
         github.delete_release_with_tag(previous_release[0], github_token, github_api_url, github_repo_slug)
     logging.info('Changing the tag name from "{}" to "{}"{}.'.format(tag_name_tmp, tag_name, '' if numbered_release_draft else ' and removing the draft flag'))
-    release.update_release(draft=numbered_release_draft, tag_name=tag_name)
+    release.update_release(name=release.title, message=release.body, prerelease=release.prerelease, target_commitish=release.target_commitish, draft=numbered_release_draft, tag_name=tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
     github_token        = env.required('GITHUB_ACCESS_TOKEN')
