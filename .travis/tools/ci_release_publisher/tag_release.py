@@ -84,7 +84,7 @@ def publish(releases, artifact_dir, tag_release_name, tag_release_body, tag_rele
         tag=tag_name_tmp,
         name=tag_release_name if tag_release_name else tag_name,
         message=tag_release_body if tag_release_body else
-                'This is an auto-generated release based on a [Travis-CI build #{}]({}/{}/builds/{})'
+                'This is an auto-generated release based on [Travis-CI build #{}]({}/{}/builds/{})'
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=tag_release_prerelease,

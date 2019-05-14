@@ -140,7 +140,7 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
         name=numbered_release_name if numbered_release_name else
              'CI build of {} branch #{}'.format(travis_branch, travis_build_number),
         message=numbered_release_body if numbered_release_body else
-                'This is an auto-generated release based on a [Travis-CI build #{}]({}/{}/builds/{})'
+                'This is an auto-generated release based on [Travis-CI build #{}]({}/{}/builds/{})'
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=numbered_release_prerelease,

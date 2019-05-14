@@ -60,9 +60,9 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
              'Temporary store release {}'
              .format(tag_name),
         message=release_body if release_body else
-                ('Auto-generated temporary release containing build artifacts of a [Travis-CI job #{}]({}/{}/jobs/{}).\n\n'
+                ('Auto-generated temporary release containing build artifacts of [Travis-CI job #{}]({}/{}/jobs/{}).\n\n'
                 'This release was created by the CI Release Publisher script, which will automatically delete it in the current or following builds.\n\n'
-                'You should not manually delete this release, unless you don\'t use the CI Release Publisher script script anymore.')
+                'You should not manually delete this release, unless you don\'t use the CI Release Publisher script anymore.')
                 .format(travis_job_id, travis_url, travis_repo_slug, travis_job_id),
         draft=True,
         prerelease=True,

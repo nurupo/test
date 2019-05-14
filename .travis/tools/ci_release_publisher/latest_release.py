@@ -80,7 +80,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
         name=latest_release_name if latest_release_name else
              'Latest CI build of {} branch'.format(travis_branch),
         message=latest_release_body if latest_release_body else
-                'This is an auto-generated release based on a [Travis-CI build #{}]({}/{}/builds/{})'
+                'This is an auto-generated release based on [Travis-CI build #{}]({}/{}/builds/{})'
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=latest_release_prerelease,
