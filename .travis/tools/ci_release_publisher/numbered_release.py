@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from github import GithubObject.NotSet as NoCommitish
 import datetime
-import github.GithubObject.NotSet as NoCommitish
 import logging
 import re
 
