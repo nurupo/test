@@ -7,10 +7,6 @@ python:
 services:
   - docker
 
-env:
-  global:
-    - GITHUB_REPO_SLUG="nurupo-test/test"
-
 matrix:
   fast_finish: true
   allow_failures:
