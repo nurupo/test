@@ -119,8 +119,8 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
             args.numbered_release_draft, args.numbered_release_prerelease, args.numbered_release_target_commitish, github_api_url, travis_url)
 
 def publish(releases, artifact_dir, numbered_release_keep_count, numbered_release_keep_time, numbered_release_name, numbered_release_body, numbered_release_draft, numbered_release_prerelease, numbered_release_target_commitish, github_api_url, travis_url):
-    github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
+    github_token        = env.required('CIRP_GITHUB_ACCESS_TOKEN') if env.optional('CIRP_GITHUB_ACCESS_TOKEN') else env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug    = env.required('CIRP_GITHUB_REPO_SLUG') if env.optional('CIRP_GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_commit       = env.required('TRAVIS_COMMIT')
@@ -144,7 +144,7 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=numbered_release_prerelease,
-        target_commitish=numbered_release_target_commitish if numbered_release_target_commitish else travis_commit if not env.optional('GITHUB_REPO_SLUG') else GithubObject.NotSet)
+        target_commitish=numbered_release_target_commitish if numbered_release_target_commitish else travis_commit if not env.optional('CIRP_GITHUB_REPO_SLUG') else GithubObject.NotSet)
     github.upload_artifacts(artifact_dir, release)
     previous_release = [r for r in releases if r.tag_name == tag_name]
     if previous_release:
@@ -154,8 +154,8 @@ def publish(releases, artifact_dir, numbered_release_keep_count, numbered_releas
     release.update_release(name=release.title, message=release.body, prerelease=release.prerelease, target_commitish=release.target_commitish, draft=numbered_release_draft, tag_name=tag_name)
 
 def cleanup(releases, branch_unfinished_build_numbers, github_api_url):
-    github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
+    github_token        = env.required('CIRP_GITHUB_ACCESS_TOKEN') if env.optional('CIRP_GITHUB_ACCESS_TOKEN') else env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug    = env.required('CIRP_GITHUB_REPO_SLUG') if env.optional('CIRP_GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
     travis_tag          = env.optional('TRAVIS_TAG')

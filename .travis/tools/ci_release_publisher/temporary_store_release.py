@@ -41,8 +41,8 @@ def publish_with_args(args, releases, artifact_dir, github_api_url, travis_api_u
     publish(releases, artifact_dir, args.release_name, args.release_body, github_api_url, travis_url)
 
 def publish(releases, artifact_dir, release_name, release_body, github_api_url, travis_url):
-    github_token        = env.required('GITHUB_ACCESS_TOKEN')
-    github_repo_slug    = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
+    github_token        = env.required('CIRP_GITHUB_ACCESS_TOKEN') if env.optional('CIRP_GITHUB_ACCESS_TOKEN') else env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug    = env.required('CIRP_GITHUB_REPO_SLUG') if env.optional('CIRP_GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug    = env.required('TRAVIS_REPO_SLUG')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_commit       = env.required('TRAVIS_COMMIT')
@@ -66,7 +66,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
                 .format(travis_job_id, travis_url, travis_repo_slug, travis_job_id),
         draft=True,
         prerelease=True,
-        target_commitish=travis_commit if not env.optional('GITHUB_REPO_SLUG') else GithubObject.NotSet)
+        target_commitish=travis_commit if not env.optional('CIRP_GITHUB_REPO_SLUG') else GithubObject.NotSet)
     github.upload_artifacts(artifact_dir, release)
     logging.info('Changing the tag name from "{}" to "{}".'.format(tag_name_tmp, tag_name))
     release.update_release(name=release.title, message=release.body, prerelease=release.prerelease, target_commitish=release.target_commitish, draft=release.draft, tag_name=tag_name)
@@ -100,8 +100,8 @@ def cleanup_with_args(args, releases, github_api_url, travis_api_url):
             args.on_nonallowed_failure, args.github_api_url, travis_api_url)
 
 def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, github_api_url, travis_api_url):
-    github_token         = env.required('GITHUB_ACCESS_TOKEN')
-    github_repo_slug     = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
+    github_token         = env.required('CIRP_GITHUB_ACCESS_TOKEN') if env.optional('CIRP_GITHUB_ACCESS_TOKEN') else env.required('GITHUB_ACCESS_TOKEN')
+    github_repo_slug     = env.required('CIRP_GITHUB_REPO_SLUG') if env.optional('CIRP_GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
     travis_repo_slug     = env.required('TRAVIS_REPO_SLUG')
     travis_branch        = env.required('TRAVIS_BRANCH')
     travis_build_number  = env.required('TRAVIS_BUILD_NUMBER')
@@ -166,7 +166,7 @@ def cleanup(releases, scopes, release_completenesses, on_nonallowed_failure, git
             logging.warning('{}: {}'.format(type(e).__name__, e))
 
 def download(releases, artifact_dir):
-    github_token        = env.required('GITHUB_ACCESS_TOKEN')
+    github_token        = env.required('CIRP_GITHUB_ACCESS_TOKEN') if env.optional('CIRP_GITHUB_ACCESS_TOKEN') else env.required('GITHUB_ACCESS_TOKEN')
     travis_branch       = env.required('TRAVIS_BRANCH')
     travis_build_number = env.required('TRAVIS_BUILD_NUMBER')
 

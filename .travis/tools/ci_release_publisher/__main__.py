@@ -88,22 +88,23 @@ try:
         config.tag_prefix = args.tag_prefix
         config.tag_prefix_tmp = args.tag_prefix_tmp
 
-        github_repo_slug = env.required('GITHUB_REPO_SLUG') if env.optional('GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
+        github_token     = env.required('CIRP_GITHUB_ACCESS_TOKEN') if env.optional('CIRP_GITHUB_ACCESS_TOKEN') else env.required('GITHUB_ACCESS_TOKEN')
+        github_repo_slug = env.required('CIRP_GITHUB_REPO_SLUG') if env.optional('CIRP_GITHUB_REPO_SLUG') else env.required('TRAVIS_REPO_SLUG')
 
         if args.command == 'store':
             if not os.path.isdir(args.artifact_dir):
                 raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
             if len(os.listdir(args.artifact_dir)) <= 0:
                 raise exception.CIReleasePublisherError('No artifacts found in "{}" directory.'.format(args.artifact_dir))
-            releases = github.github(env.required('GITHUB_ACCESS_TOKEN'), args.github_api_url).get_repo(github_repo_slug).get_releases()
+            releases = github.github(github_token, args.github_api_url).get_repo(github_repo_slug).get_releases()
             temporary_store_release.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
         elif args.command == 'cleanup_store':
-            releases = github.github(env.required('GITHUB_ACCESS_TOKEN'), args.github_api_url).get_repo(github_repo_slug).get_releases()
+            releases = github.github(github_token, args.github_api_url).get_repo(github_repo_slug).get_releases()
             temporary_store_release.cleanup_with_args(args, releases, args.github_api_url, travis_api_url)
         elif args.command == 'collect':
             if not os.path.isdir(args.artifact_dir):
                 raise exception.CIReleasePublisherError('Directory "{}" doesn\'t exist.'.format(args.artifact_dir))
-            releases = github.github(env.required('GITHUB_ACCESS_TOKEN'), args.github_api_url).get_repo(github_repo_slug).get_releases()
+            releases = github.github(github_token, args.github_api_url).get_repo(github_repo_slug).get_releases()
             temporary_store_release.download(releases, args.artifact_dir)
         elif args.command == 'publish':
             if not os.path.isdir(args.artifact_dir):
@@ -112,12 +113,12 @@ try:
                 raise exception.CIReleasePublisherError('No artifacts found in "{}" directory.'.format(args.artifact_dir))
             if not any(r.publish_validate_args(args) for r in release_kinds):
                 raise exception.CIReleasePublisherError('You must specify what kind of release you would like to publish.')
-            releases = github.github(env.required('GITHUB_ACCESS_TOKEN'), args.github_api_url).get_repo(github_repo_slug).get_releases()
+            releases = github.github(github_token, args.github_api_url).get_repo(github_repo_slug).get_releases()
             for r in release_kinds:
                 r.publish_with_args(args, releases, args.artifact_dir, args.github_api_url, travis_api_url, travis_url)
         elif args.command == 'cleanup_publish':
-            releases = github.github(env.required('GITHUB_ACCESS_TOKEN'), args.github_api_url).get_repo(github_repo_slug).get_releases()
-            branch_unfinished_build_numbers = travis.Travis.github_auth(env.required('GITHUB_ACCESS_TOKEN'), travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_BRANCH'))
+            releases = github.github(github_token, args.github_api_url).get_repo(github_repo_slug).get_releases()
+            branch_unfinished_build_numbers = travis.Travis.github_auth(github_token, travis_api_url).branch_unfinished_build_numbers(env.required('TRAVIS_REPO_SLUG'), env.required('TRAVIS_BRANCH'))
             for r in release_kinds:
                 r.cleanup(releases, branch_unfinished_build_numbers, args.github_api_url)
         else:
