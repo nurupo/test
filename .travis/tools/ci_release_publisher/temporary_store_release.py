@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum, auto, unique
-from github import GithubObject.NotSet as NoCommitish
+from github import GithubObject
 import logging
 import re
 
@@ -66,7 +66,7 @@ def publish(releases, artifact_dir, release_name, release_body, github_api_url, 
                 .format(travis_job_id, travis_url, travis_repo_slug, travis_job_id),
         draft=True,
         prerelease=True,
-        target_commitish=travis_commit if not env.optional('GITHUB_REPO_SLUG') else NoCommitish)
+        target_commitish=travis_commit if not env.optional('GITHUB_REPO_SLUG') else GithubObject.NotSet)
     github.upload_artifacts(artifact_dir, release)
     logging.info('Changing the tag name from "{}" to "{}".'.format(tag_name_tmp, tag_name))
     release.update_release(tag_name=tag_name)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from github import GithubObject.NotSet as NoCommitish
+from github import GithubObject
 import logging
 import re
 
@@ -84,7 +84,7 @@ def publish(releases, artifact_dir, latest_release_name, latest_release_body, la
                 .format(travis_build_id, travis_url, travis_repo_slug, travis_build_id),
         draft=True,
         prerelease=latest_release_prerelease,
-        target_commitish=latest_release_target_commitish if latest_release_target_commitish else travis_commit if not env.optional('GITHUB_REPO_SLUG') else NoCommitish)
+        target_commitish=latest_release_target_commitish if latest_release_target_commitish else travis_commit if not env.optional('GITHUB_REPO_SLUG') else GithubObject.NotSet)
     github.upload_artifacts(artifact_dir, release)
     if not _is_latest_build_for_branch():
         github.delete_release_with_tag(release, github_token, github_api_url, github_repo_slug)
