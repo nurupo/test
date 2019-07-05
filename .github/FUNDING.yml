@@ -1,1 +1,3 @@
-custom: [https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9HJHAH5UDL3GL, https://www.paypal.com/address/34qxFsZjs1ZWVBwer11gXiycpv7QHTA8q3]
+custom:
+  - https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9HJHAH5UDL3GL
+  - https://www.paypal.com/address/34qxFsZjs1ZWVBwer11gXiycpv7QHTA8q3
