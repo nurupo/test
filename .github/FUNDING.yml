@@ -13,9 +13,6 @@ custom:
     # to trust them not to redirect this page to someone else's wallet as a
     # person donating would likely copy the address off the Blockstream web page
     # rather than from the URL GitHub shows the user.
-    #
-    # At some point I should setup a static page with donation information and
-    # just link to that in here. 
   - https://blockstream.info/address/34qxFsZjs1ZWVBwer11gXiycpv7QHTA8q3
 
 # At some point I should setup a static page with donation information and link
